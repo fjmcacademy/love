@@ -1,18 +1,507 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Teaching Board</title>
-<style>
-:root{color-scheme:dark;font:14px/1.4 system-ui,sans-serif;background:#101116;color:#eef0f5}*{box-sizing:border-box}body{margin:0;height:100vh;display:flex;flex-direction:column}.bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:9px;background:#1a1b22;border-bottom:1px solid #343640}.bar button,.bar select,.bar label{background:#262832;color:inherit;border:1px solid #444753;border-radius:6px;padding:7px 10px;cursor:pointer}.bar button.active{border-color:#a78bfa;background:#3a3150}.bar input[type=range]{width:120px;accent-color:#a78bfa}.bar input[type=color]{width:32px;height:29px;padding:1px;border:0;background:none}.spacer{flex:1}.board-area{flex:1;overflow:auto;display:flex;justify-content:center;align-items:flex-start;padding:28px;background:#101116}.sheet{position:relative;width:min(850px,95vw);aspect-ratio:850/1200;background:#fff;box-shadow:0 6px 25px #0009;overflow:hidden;touch-action:none}.sheet.lined{background-image:repeating-linear-gradient(to bottom,transparent 0,transparent calc(var(--gap) - 1px),var(--rule) calc(var(--gap) - 1px),var(--rule) var(--gap))}.sheet.grid{background-image:linear-gradient(var(--rule) 1px,transparent 1px),linear-gradient(90deg,var(--rule) 1px,transparent 1px);background-size:var(--gap) var(--gap)}.sheet.dotted{background-image:radial-gradient(var(--rule) 1px,transparent 1px);background-size:var(--gap) var(--gap)}canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}.meta{color:#aab0bf}.color{width:24px;height:24px;border-radius:50%;border:2px solid #777;cursor:pointer}.file{display:none}.notice{position:fixed;bottom:15px;left:50%;transform:translateX(-50%);background:#262832;padding:9px 15px;border-radius:8px;display:none;z-index:5}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Teaching Board</title>
+  <style>
+    :root {
+      --bg: #111319;
+      --panel: #171a20;
+      --bar: #1d2128;
+      --line: #2d3340;
+      --text: #edf2ff;
+      --muted: #a9b3c5;
+      --accent: #8b5cf6;
+      --canvas-bg: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font: 14px/1.4 system-ui, -apple-system, Segoe UI, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bar);
+      border-bottom: 1px solid var(--line);
+      padding: 8px 12px;
+      min-height: 52px;
+      flex-wrap: wrap;
+    }
+
+    .brand { font-weight: 700; margin-right: 8px; }
+    .spacer { flex: 1; }
+
+    button, select, input {
+      font: inherit;
+      color: inherit;
+    }
+
+    button {
+      background: #181d24;
+      border: 1px solid #363d49;
+      border-radius: 7px;
+      padding: 7px 10px;
+      cursor: pointer;
+    }
+
+    button:hover { background: #232a34; }
+
+    select {
+      background: #11161d;
+      border: 1px solid #363d49;
+      border-radius: 6px;
+      padding: 6px 10px;
+    }
+
+    .tool-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 12px 10px;
+      background: #141920;
+      border-bottom: 1px solid var(--line);
+      flex-wrap: wrap;
+    }
+
+    .tool-box label {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .board-area {
+      flex: 1;
+      overflow: auto;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 24px 12px 40px;
+      background: #0d1117;
+    }
+
+    .sheet {
+      position: relative;
+      width: min(82vw, 850px);
+      min-width: 480px;
+      background: var(--canvas-bg);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .sheet.lined {
+      background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent 29px,
+        #dfe7f2 29px,
+        #dfe7f2 30px
+      );
+    }
+
+    .sheet.grid {
+      background-image:
+        linear-gradient(#dfe7f2 1px, transparent 1px),
+        linear-gradient(90deg, #dfe7f2 1px, transparent 1px);
+      background-size: 30px 30px;
+    }
+
+    .sheet.dotted {
+      background-image: radial-gradient(#dfe7f2 1px, transparent 1px);
+      background-size: 30px 30px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: transparent;
+      touch-action: none;
+      cursor: crosshair;
+    }
+
+    .notice {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15,18,23,.92);
+      border: 1px solid #374151;
+      color: #dcfce7;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 12px;
+      opacity: 0;
+      transition: opacity .2s ease;
+      pointer-events: none;
+    }
+
+    .notice.show { opacity: 1; }
+
+    @media (max-width: 700px) {
+      .sheet { min-width: 360px; width: 92vw; }
+      .bar { gap: 6px; }
+      .tool-box { padding-bottom: 8px; }
+    }
+  </style>
 </head>
 <body>
-<div class="bar"><b>Teaching Board</b><span class="spacer"></span><button id="undo">↶ Undo</button><button id="clear">Clear</button><button id="open">Open photo / PDF</button><input class="file" id="file" type="file" accept="image/*,application/pdf,.pdf"><button id="prev">‹</button><span id="pageLabel">Page 1</span><button id="next">›</button><button id="new">＋ Page</button><select id="paper" aria-label="Board style"><option value="lined">Lined</option><option value="blank">Plain</option><option value="grid">Grid</option><option value="dotted">Dots</option></select></div>
-<div class="bar"><span>Tool</span><select id="tool" aria-label="Marker tool"><option>Writing Marker</option><option>Soft Marker</option><option>Writing Pen</option><option>Soft Brush</option><option>Neon Glow</option><option>Eraser</option></select><label>Color <input id="color" type="color" value="#111827"></label><span>Size <b id="sizeValue">5 px</b></span><input id="size" type="range" min="1" max="48" value="5" aria-label="Marker or eraser size"><span id="sizeHint" class="meta">Marker size</span><span class="spacer"></span><span class="meta">Select Plain for a blank board.</span></div>
-<main class="board-area"><div id="sheet" class="sheet lined"><canvas id="canvas" width="850" height="1200"></canvas></div></main><div id="notice" class="notice"></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script>
-(()=>{'use strict';const $=s=>document.querySelector(s),canvas=$('#canvas'),ctx=canvas.getContext('2d'),sheet=$('#sheet');let pages=[{strokes:[],paper:'lined',bg:'#fff',media:null}],current=0,tool='Writing Marker',ink='#111827',size=5,drawing=null,pdfDoc=null,pdfPage=1;function toast(s){const n=$('#notice');n.textContent=s;n.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>n.style.display='none',2400)}function page(){return pages[current]}function render(){const p=page();sheet.className='sheet '+p.paper;sheet.style.backgroundColor=p.bg;sheet.style.setProperty('--gap','30px');sheet.style.setProperty('--rule','#d5deeb');$('#paper').value=p.paper;$('#pageLabel').textContent=`Page ${current+1} / ${pages.length}`;draw()}function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);const p=page();if(p.media){const im=new Image();im.onload=()=>{if(page()===p)ctx.drawImage(im,0,0,canvas.width,canvas.height);drawStrokes(p)};im.src=p.media}else drawStrokes(p)}function drawStrokes(p){for(const s of p.strokes){if(!s.points.length)continue;ctx.save();ctx.globalCompositeOperation=s.tool==='Eraser'?'destination-out':'source-over';ctx.strokeStyle=s.color;ctx.lineWidth=s.width;ctx.lineCap='round';ctx.lineJoin='round';if(s.tool==='Neon Glow'){ctx.shadowColor=s.color;ctx.shadowBlur=s.width*2}if(s.tool==='Soft Brush')ctx.globalAlpha=.65;ctx.beginPath();ctx.moveTo(s.points[0].x,s.points[0].y);for(let i=1;i<s.points.length;i++)ctx.lineTo(s.points[i].x,s.points[i].y);if(s.points.length===1){ctx.lineTo(s.points[0].x+.1,s.points[0].y+.1)}ctx.stroke();ctx.restore()}}function xy(e){const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*canvas.width/r.width,y:(e.clientY-r.top)*canvas.height/r.height}}canvas.addEventListener('pointerdown',e=>{e.preventDefault();canvas.setPointerCapture(e.pointerId);drawing={tool,color:ink,width:size,points:[xy(e)]};page().strokes.push(drawing);draw()});canvas.addEventListener('pointermove',e=>{if(!drawing)return;drawing.points.push(xy(e));draw()});for(const ev of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(ev,()=>drawing=null);$('#tool').onchange=e=>{tool=e.target.value;$('#sizeHint').textContent=tool==='Eraser'?'Eraser size':'Marker size'};$('#color').oninput=e=>ink=e.target.value;$('#size').oninput=e=>{size=+e.target.value;$('#sizeValue').textContent=size+' px'};$('#paper').onchange=e=>{page().paper=e.target.value;render()};$('#undo').onclick=()=>{page().strokes.pop();draw()};$('#clear').onclick=()=>{page().strokes=[];page().media=null;draw()};$('#new').onclick=()=>{pages.push({strokes:[],paper:page().paper,bg:page().bg,media:null});current=pages.length-1;render()};$('#prev').onclick=()=>{if(current>0){current--;render()}};$('#next').onclick=()=>{if(current<pages.length-1){current++;render()}};$('#open').onclick=()=>$('#file').click();$('#file').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{if(f.type.startsWith('image/')){page().media=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(f)});draw();toast('Photo opened on board')}else if(f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf')){if(!window.pdfjsLib)throw new Error('PDF viewer could not load; check your internet connection.');pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';pdfDoc=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;pdfPage=1;await addPdfPage();toast(`PDF page 1 of ${pdfDoc.numPages} opened. Use PDF next/previous controls.`)}else throw new Error('Please choose a photo or PDF file.')}catch(err){toast(err.message||'Could not open this file')}finally{e.target.value=''}};async function addPdfPage(){const pg=await pdfDoc.getPage(pdfPage),v=pg.getViewport({scale:1}),scale=Math.min(850/v.width,1200/v.height),viewport=pg.getViewport({scale}),tmp=document.createElement('canvas');tmp.width=Math.round(viewport.width);tmp.height=Math.round(viewport.height);await pg.render({canvasContext:tmp.getContext('2d'),viewport}).promise;page().media=tmp.toDataURL('image/png');draw();toast(`PDF page ${pdfPage} of ${pdfDoc.numPages}`)}const pdfControls=document.createElement('span');pdfControls.innerHTML='<button id="pdfPrev" title="Previous PDF page">PDF ‹</button><button id="pdfNext" title="Next PDF page">PDF ›</button>';document.querySelector('.bar').append(pdfControls);$('#pdfPrev').onclick=async()=>{if(pdfDoc&&pdfPage>1){pdfPage--;await addPdfPage()}};$('#pdfNext').onclick=async()=>{if(pdfDoc&&pdfPage<pdfDoc.numPages){pdfPage++;await addPdfPage()}};render()})();
-</script>
+  <div class="bar">
+    <span class="brand">Teaching Board</span>
+    <button id="undo">↶ Undo</button>
+    <button id="clear">Clear</button>
+    <button id="openFile">Open photo / PDF</button>
+    <button id="printBtn">Export / Print PDF</button>
+    <div class="spacer"></div>
+    <span id="fileName">Board</span>
+  </div>
+
+  <div class="tool-box">
+    <label for="tool">Tool</label>
+    <select id="tool" aria-label="Marker tool">
+      <option>Writing Pen</option>
+      <option>Writing Marker</option>
+      <option>Soft Marker</option>
+      <option>Soft Brush</option>
+      <option>Ink Flow</option>
+      <option>Neon Glow</option>
+      <option>Fountain Pen</option>
+      <option>Calligraphy</option>
+      <option>Sketch Pen</option>
+      <option>Eraser</option>
+    </select>
+
+    <label for="color">Ink</label>
+    <input id="color" type="color" value="#111827" aria-label="Ink colour">
+
+    <label for="size">Size</label>
+    <input id="size" type="range" min="1" max="40" value="4" aria-label="Marker size">
+    <span id="sizeLabel">4 px</span>
+
+    <label for="paperStyle">Paper</label>
+    <select id="paperStyle" aria-label="Background style">
+      <option value="lined">Notebook</option>
+      <option value="blank">Blank</option>
+      <option value="grid">Grid</option>
+      <option value="dotted">Dots</option>
+    </select>
+  </div>
+
+  <main class="board-area">
+    <div id="sheet" class="sheet lined">
+      <canvas id="canvas" width="850" height="1200"></canvas>
+    </div>
+  </main>
+
+  <div id="notice" class="notice" aria-live="polite"></div>
+  <input id="fileInput" type="file" accept="image/*,.pdf" hidden>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    (() => {
+      'use strict';
+
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const sheet = document.getElementById('sheet');
+      const toolSelect = document.getElementById('tool');
+      const colorInput = document.getElementById('color');
+      const sizeInput = document.getElementById('size');
+      const sizeLabel = document.getElementById('sizeLabel');
+      const paperStyle = document.getElementById('paperStyle');
+      const notice = document.getElementById('notice');
+      const fileInput = document.getElementById('fileInput');
+
+      let strokes = [];
+      let activeStroke = null;
+      let backgroundImage = null;
+      let backgroundMode = 'plain';
+      let tool = 'Writing Pen';
+      let ink = '#111827';
+      let size = 4;
+
+      function showNotice(msg) {
+        notice.textContent = msg;
+        notice.classList.add('show');
+        clearTimeout(showNotice.timer);
+        showNotice.timer = setTimeout(() => notice.classList.remove('show'), 2200);
+      }
+
+      function getCanvasPoint(e) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+          x: ((e.clientX - rect.left) / rect.width) * canvas.width,
+          y: ((e.clientY - rect.top) / rect.height) * canvas.height
+        };
+      }
+
+      function drawBackground() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (backgroundImage) {
+          const img = backgroundImage;
+          const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+          const drawW = img.width * scale;
+          const drawH = img.height * scale;
+          const ox = (canvas.width - drawW) / 2;
+          const oy = (canvas.height - drawH) / 2;
+          ctx.drawImage(img, ox, oy, drawW, drawH);
+        }
+      }
+
+      function drawStroke(stroke) {
+        if (!stroke.points || stroke.points.length === 0) return;
+
+        const p = stroke.points;
+        const baseColor = stroke.color || ink;
+        const w = stroke.width || size;
+        const toolName = stroke.tool || tool;
+
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.globalCompositeOperation = toolName === 'Eraser' ? 'destination-out' : 'source-over';
+
+        if (toolName === 'Eraser') {
+          ctx.strokeStyle = 'rgba(0,0,0,1)';
+          ctx.lineWidth = Math.max(4, w * 1.8);
+        } else {
+          ctx.strokeStyle = baseColor;
+          ctx.lineWidth = w;
+          ctx.shadowBlur = 0;
+
+          if (toolName === 'Soft Brush') {
+            ctx.globalAlpha = 0.35;
+            ctx.lineWidth = w * 2.2;
+          } else if (toolName === 'Writing Marker') {
+            ctx.globalAlpha = 0.48;
+            ctx.lineWidth = w * 3.2;
+          } else if (toolName === 'Soft Marker') {
+            ctx.globalAlpha = 0.30;
+            ctx.lineWidth = w * 2.4;
+          } else if (toolName === 'Ink Flow') {
+            ctx.globalAlpha = 0.75;
+            ctx.lineWidth = w * 1.5;
+          } else if (toolName === 'Neon Glow') {
+            ctx.globalAlpha = 1;
+            ctx.shadowColor = baseColor;
+            ctx.shadowBlur = 12;
+            ctx.lineWidth = w * 1.25;
+          } else if (toolName === 'Fountain Pen') {
+            ctx.globalAlpha = 0.9;
+            ctx.lineWidth = w * 1.25;
+          } else if (toolName === 'Calligraphy') {
+            ctx.globalAlpha = 0.8;
+            ctx.lineWidth = w * 1.8;
+            ctx.lineCap = 'square';
+          } else if (toolName === 'Sketch Pen') {
+            ctx.globalAlpha = 0.9;
+            ctx.setLineDash([Math.max(1, w * 0.8), Math.max(1, w * 0.45)]);
+          }
+        }
+
+        ctx.beginPath();
+        ctx.moveTo(p[0].x, p[0].y);
+
+        if (p.length === 1) {
+          ctx.arc(p[0].x, p[0].y, Math.max(1, w / 2), 0, Math.PI * 2);
+          ctx.fillStyle = baseColor;
+          ctx.fill();
+          ctx.restore();
+          return;
+        }
+
+        if (toolName === 'Auto Smooth' || toolName === 'Fountain Pen') {
+          for (let i = 1; i < p.length; i++) {
+            const midX = (p[i - 1].x + p[i].x) / 2;
+            const midY = (p[i - 1].y + p[i].y) / 2;
+            ctx.quadraticCurveTo(p[i - 1].x, p[i - 1].y, midX, midY);
+          }
+          const last = p[p.length - 1];
+          ctx.lineTo(last.x, last.y);
+        } else {
+          for (let i = 1; i < p.length; i++) {
+            ctx.lineTo(p[i].x, p[i].y);
+          }
+        }
+
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function renderBoard() {
+        drawBackground();
+        for (const stroke of strokes) {
+          drawStroke(stroke);
+        }
+      }
+
+      function startStroke(e) {
+        activeStroke = {
+          tool: toolSelect.value,
+          color: colorInput.value,
+          width: Number(sizeInput.value),
+          points: [getCanvasPoint(e)]
+        };
+        strokes.push(activeStroke);
+        renderBoard();
+      }
+
+      function moveStroke(e) {
+        if (!activeStroke) return;
+        activeStroke.points.push(getCanvasPoint(e));
+        renderBoard();
+      }
+
+      function endStroke() {
+        activeStroke = null;
+      }
+
+      function applyPaperStyle() {
+        const style = paperStyle.value;
+        sheet.className = 'sheet ' + style;
+      }
+
+      function updateSizeLabel() {
+        sizeLabel.textContent = `${Number(sizeInput.value)} px`;
+      }
+
+      toolSelect.addEventListener('change', () => {
+        tool = toolSelect.value;
+      });
+
+      colorInput.addEventListener('input', () => {
+        ink = colorInput.value;
+      });
+
+      sizeInput.addEventListener('input', () => {
+        size = Number(sizeInput.value);
+        updateSizeLabel();
+      });
+
+      paperStyle.addEventListener('change', () => {
+        applyPaperStyle();
+      });
+
+      canvas.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        canvas.setPointerCapture(e.pointerId);
+        startStroke(e);
+      });
+
+      canvas.addEventListener('pointermove', (e) => {
+        moveStroke(e);
+      });
+
+      canvas.addEventListener('pointerup', endStroke);
+      canvas.addEventListener('pointerleave', endStroke);
+      canvas.addEventListener('pointercancel', endStroke);
+
+      document.getElementById('undo').addEventListener('click', () => {
+        if (strokes.length) {
+          strokes.pop();
+          renderBoard();
+        }
+      });
+
+      document.getElementById('clear').addEventListener('click', () => {
+        strokes = [];
+        renderBoard();
+      });
+
+      document.getElementById('printBtn').addEventListener('click', () => {
+        window.print();
+      });
+
+      document.getElementById('openFile').addEventListener('click', () => fileInput.click());
+
+      function loadImageAsBackground(file) {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          const url = URL.createObjectURL(file);
+          img.onload = () => {
+            backgroundImage = img;
+            backgroundMode = 'image';
+            renderBoard();
+            resolve();
+            URL.revokeObjectURL(url);
+          };
+          img.onerror = () => reject(new Error('Could not load the image.'));
+          img.src = url;
+        });
+      }
+
+      async function loadPdfAsBackground(file) {
+        if (!window.pdfjsLib) {
+          throw new Error('PDF viewer is still loading. Please try again.');
+        }
+
+        const workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
+
+        const bytes = await file.arrayBuffer();
+        const pdf = await window.pdfjsLib.getDocument({ data: new Uint8Array(bytes) }).promise;
+        const page = await pdf.getPage(1);
+        const viewport = page.getViewport({ scale: 1.2 });
+
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCanvas.width = Math.ceil(viewport.width);
+        tempCanvas.height = Math.ceil(viewport.height);
+
+        await page.render({ canvasContext: tempCtx, viewport }).promise;
+
+        const img = new Image();
+        img.src = tempCanvas.toDataURL('image/png');
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+        });
+
+        backgroundImage = img;
+        backgroundMode = 'pdf';
+        renderBoard();
+        showNotice(`PDF opened. You can write on it.`);
+      }
+
+      fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+
+        try {
+          if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+            await loadPdfAsBackground(file);
+          } else if (file.type.startsWith('image/')) {
+            await loadImageAsBackground(file);
+          } else {
+            showNotice('Choose a PNG, JPG, or PDF file.');
+          }
+
+          document.getElementById('fileName').textContent = file.name || 'Board';
+        } catch (err) {
+          console.error(err);
+          showNotice(err.message || 'Could not open this file.');
+        } finally {
+          fileInput.value = '';
+        }
+      });
+
+      function initializeBoard() {
+        applyPaperStyle();
+        updateSizeLabel();
+        renderBoard();
+      }
+
+      initializeBoard();
+    })();
+  </script>
 </body>
 </html>
