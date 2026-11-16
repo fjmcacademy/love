@@ -1,41 +1,1495 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Teaching Board</title>
-<style>
-:root{color-scheme:dark;--bg:#0d0e11;--panel:#090a0d;--bar:#17181b;--border:#2b2c31;--muted:#758095;--ink:#111827;--paper:#fff;--rule:#cfdae8;--gap:30px}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#e8ebf0;font:13px/1.35 Inter,system-ui,Segoe UI,sans-serif;height:100vh;overflow:hidden}button,select,input{font:inherit;color:inherit}button{background:#121317;border:1px solid #303138;border-radius:6px;padding:5px 9px;cursor:pointer;white-space:nowrap}button:hover{background:#23242a}button.active{border-color:#9c7af3;background:#28213a}.app{height:100vh;display:flex}.sidebar{width:205px;min-width:205px;background:var(--panel);border-right:1px solid #25262a;padding:9px;overflow:auto;scrollbar-width:thin;scrollbar-color:#555 transparent}.brand{font-weight:700;font-size:14px;padding:1px 0 11px}.section{font-size:10px;letter-spacing:1px;color:#8591a4;margin:14px 0 7px}.themes{display:grid;grid-template-columns:1fr 1fr;gap:6px}.themes button{text-align:left;font-size:11px;padding:7px}.small{font-size:10px;color:#8390a3;margin:8px 0 4px}.range{width:100%;accent-color:#a78bfa}.swatchbox{padding:8px;border:1px solid #292a30;border-radius:8px}.swatchgrid{display:flex;flex-wrap:wrap;gap:5px}.swatch{width:23px;height:23px;border:2px solid #454851;padding:0;border-radius:50%;flex:none}.swatch.sel{outline:2px solid white;outline-offset:1px}.tool-list{display:grid;gap:3px}.tool{position:relative;text-align:left;background:transparent;border-color:transparent;padding:7px 5px 7px 13px}.tool:before{content:"";position:absolute;left:2px;top:7px;bottom:7px;width:3px;background:var(--c);border-radius:3px}.tool small{display:block;color:#697589;font-size:10px}.tool.sel{background:#222329;border-color:#303138}.record{border:1px solid #292a30;border-radius:8px;padding:8px;color:#9aa3b0;font-size:10px}.record p{margin:7px 0}.record select{width:100%;background:#15161a;border:1px solid #383941;border-radius:5px;padding:6px;margin:5px 0}.workspace{flex:1;min-width:0;display:flex;flex-direction:column}.toolbar,.subbar{display:flex;align-items:center;gap:5px;padding:4px 8px;background:var(--bar);border-bottom:1px solid #28292e;white-space:nowrap;overflow-x:auto;min-height:34px}.toolbar button,.subbar button{font-size:12px;padding:4px 8px}.spacer{flex:1}.subbar{background:#101114;min-height:32px}.subbar select{background:#17181c;border:1px solid #383940;border-radius:5px;padding:4px 7px}.stage{flex:1;overflow:auto;position:relative;padding:60px 30px 45px;background:#0d0e11;display:flex;justify-content:center;align-items:flex-start}.sheet-wrap{position:relative;width:min(78vw,850px);min-width:560px;height:1200px;background:var(--paper);box-shadow:0 6px 25px #0008;overflow:hidden}.sheet{position:absolute;inset:0;background-color:var(--paper);background-image:repeating-linear-gradient(to bottom,transparent 0,transparent calc(var(--gap) - 1px),var(--rule) calc(var(--gap) - 1px),var(--rule) var(--gap));touch-action:none}.sheet.blank{background-image:none}.sheet.grid{background-image:linear-gradient(var(--rule) 1px,transparent 1px),linear-gradient(90deg,var(--rule) 1px,transparent 1px);background-size:var(--gap) var(--gap)}.sheet.dotted{background-image:radial-gradient(var(--rule) 1px,transparent 1px);background-size:var(--gap) var(--gap)}.sheet canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}.page-tag{position:absolute;top:-29px;left:50%;transform:translateX(-50%);color:#606b7b;background:#17181c;border-radius:20px;padding:4px 11px;font-size:10px}.palrow{display:flex;gap:5px}.palrow .swatch{width:20px;height:20px}.camera-float{display:none;position:fixed;z-index:10;left:calc(100% - 310px);top:100px;width:250px;height:170px;border:2px solid #d8d8dd;background:#090a0c;box-shadow:0 6px 25px #0009;touch-action:none;resize:both;overflow:hidden;min-width:100px;min-height:70px}.camera-float.on{display:block}.camera-float.circle{border-radius:50%;resize:none}.camera-float.square{width:180px;height:180px;resize:both}.camera-float.rect{border-radius:8px}.camera-float video{width:100%;height:100%;object-fit:cover}.camera-float.mirror video{transform:scaleX(-1)}.cam-bar{position:absolute;top:3px;left:50%;transform:translateX(-50%);z-index:2;display:flex;gap:3px;opacity:.9;transition:opacity .15s}.camera-float:hover .cam-bar{opacity:1}.cam-bar button{font-size:10px;padding:3px 5px;background:#08090ccc}.corner{position:absolute;width:14px;height:14px;right:0;bottom:0;background:#cbd5e1;border:2px solid #111;cursor:nwse-resize;z-index:3}.modal{position:fixed;inset:0;z-index:20;background:#0009;display:none;place-items:center}.modal.open{display:grid}.dialog{width:min(480px,92vw);background:#17181d;border:1px solid #464851;border-radius:12px;padding:18px}.dialog h3{margin:0 0 10px}.dialog p{color:#aab1bf}.dialog input,.dialog textarea{width:100%;background:#0d0e11;border:1px solid #3c3e46;border-radius:6px;padding:8px;margin:5px 0}.dialog textarea{min-height:80px}.row{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}.chat-panel{display:none;position:fixed;right:14px;bottom:14px;width:300px;max-height:55vh;z-index:12;background:#14161b;border:1px solid #42444d;border-radius:10px;padding:10px}.chat-panel.open{display:flex;flex-direction:column}.chat-log{overflow:auto;min-height:90px;max-height:220px;color:#cdd5e1;font-size:12px}.chat-compose{display:flex;gap:5px}.chat-compose input{min-width:0;flex:1;background:#0c0d10;border:1px solid #34363c;border-radius:5px;padding:6px}.toast{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);z-index:30;background:#22242a;border:1px solid #454750;padding:9px 14px;border-radius:8px;display:none}.toast.show{display:block}.student-screen{display:none;position:fixed;inset:0;z-index:15;background:#0b0d11;padding:14px}.student-screen.open{display:flex;flex-direction:column}.student-top{display:flex;align-items:center;gap:8px;padding-bottom:10px}.student-video{flex:1;min-height:0;width:100%;object-fit:contain;background:#000;border-radius:8px}.comfort{filter:sepia(.14)}@media(max-width:850px){.sidebar{width:180px;min-width:180px}.sheet-wrap{min-width:500px;width:80vw}.toolbar button{font-size:11px;padding:4px 6px}}@media print{body{overflow:visible;background:#fff}.sidebar,.toolbar,.subbar{display:none!important}.stage{overflow:visible;background:white;padding:0}.sheet-wrap{width:100%;height:100vh;box-shadow:none;page-break-after:always}}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Teaching Board</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    :root{
+      color-scheme:dark;
+      --bg:#0d0e11;
+      --panel:#090a0d;
+      --bar:#17181b;
+      --border:#2b2c31;
+      --muted:#758095;
+      --ink:#111827;
+      --paper:#fff;
+      --rule:#cfdae8;
+      --gap:30px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%}
+    body{
+      background:var(--bg);
+      color:#e8ebf0;
+      font:13px/1.35 Inter,system-ui,Segoe UI,sans-serif;
+      height:100vh;
+      overflow:hidden;
+    }
+    button,select,input{
+      font:inherit;color:inherit
+    }
+    button{
+      background:#121317;
+      border:1px solid #303138;
+      border-radius:6px;
+      padding:5px 9px;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+    button:hover{background:#23242a}
+    button.active{
+      border-color:#9c7af3;
+      background:#28213a;
+    }
+    .app{height:100vh;display:flex}
+    .sidebar{
+      width:205px;min-width:205px;
+      background:var(--panel);
+      border-right:1px solid #25262a;
+      padding:9px;
+      overflow:auto;
+      scrollbar-width:thin;
+      scrollbar-color:#555 transparent;
+    }
+    .brand{font-weight:700;font-size:14px;padding:1px 0 11px}
+    .section{font-size:10px;letter-spacing:1px;color:#8591a4;margin:14px 0 7px}
+    .themes{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+    .themes button{text-align:left;font-size:11px;padding:7px}
+    .small{font-size:10px;color:#8390a3;margin:8px 0 4px}
+    .range{width:100%;accent-color:#a78bfa}
+    .swatchbox{padding:8px;border:1px solid #292a30;border-radius:8px}
+    .swatchgrid{display:flex;flex-wrap:wrap;gap:5px}
+    .swatch{
+      width:23px;height:23px;border:2px solid #454851;padding:0;border-radius:50%;flex:none;
+    }
+    .swatch.sel{outline:2px solid white;outline-offset:1px}
+    .tool-list{display:grid;gap:3px}
+    .tool{
+      position:relative;text-align:left;background:transparent;border-color:transparent;padding:7px 5px 7px 13px;
+    }
+    .tool:before{
+      content:"";position:absolute;left:2px;top:7px;bottom:7px;width:3px;background:var(--c);border-radius:3px;
+    }
+    .tool small{display:block;color:#697589;font-size:10px}
+    .tool.sel{background:#222329;border-color:#303138}
+    .record{
+      border:1px solid #292a30;border-radius:8px;padding:8px;color:#9aa3b0;font-size:10px;
+    }
+    .record p{margin:7px 0}
+    .record select{width:100%;background:#15161a;border:1px solid #383941;border-radius:5px;padding:6px;margin:5px 0}
+    .workspace{
+      flex:1;min-width:0;display:flex;flex-direction:column;
+    }
+    .toolbar,.subbar{
+      display:flex;align-items:center;gap:5px;padding:4px 8px;background:var(--bar);border-bottom:1px solid #28292e;white-space:nowrap;overflow-x:auto;min-height:34px;
+    }
+    .toolbar button,.subbar button{font-size:12px;padding:4px 8px}
+    .spacer{flex:1}
+    .subbar{background:#101114;min-height:32px}
+    .subbar select{
+      background:#17181c;border:1px solid #383940;border-radius:5px;padding:4px 7px;
+    }
+    .stage{
+      flex:1;overflow:auto;position:relative;padding:60px 30px 45px;background:#0d0e11;display:flex;justify-content:center;align-items:flex-start;
+    }
+    .sheet-wrap{
+      position:relative;width:min(78vw,850px);min-width:560px;height:1200px;background:var(--paper);box-shadow:0 6px 25px #0008;overflow:hidden;
+    }
+    .sheet{
+      position:absolute;inset:0;background-color:var(--paper);
+      background-image:repeating-linear-gradient(to bottom,transparent 0,transparent calc(var(--gap) - 1px),var(--rule) calc(var(--gap) - 1px),var(--rule) var(--gap));
+      touch-action:none;
+    }
+    .sheet.blank{background-image:none}
+    .sheet.grid{
+      background-image:linear-gradient(var(--rule) 1px,transparent 1px),linear-gradient(90deg,var(--rule) 1px,transparent 1px);
+      background-size:var(--gap) var(--gap)
+    }
+    .sheet.dotted{
+      background-image:radial-gradient(var(--rule) 1px,transparent 1px);
+      background-size:var(--gap) var(--gap)
+    }
+    .sheet canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+    .page-tag{
+      position:absolute;top:-29px;left:50%;transform:translateX(-50%);color:#606b7b;background:#17181c;border-radius:20px;padding:4px 11px;font-size:10px;
+    }
+    .palrow{display:flex;gap:5px}
+    .palrow .swatch{width:20px;height:20px}
+    .camera-float{
+      display:none;position:fixed;z-index:10;left:calc(100% - 310px);top:100px;width:250px;height:170px;border:2px solid #d8d8dd;background:#090a0c;box-shadow:0 6px 25px #0009;touch-action:none;resize:both;overflow:hidden;min-width:100px;min-height:70px;
+    }
+    .camera-float.on{display:block}
+    .camera-float.circle{border-radius:50%;resize:none}
+    .camera-float.square{width:180px;height:180px;resize:both}
+    .camera-float.rect{border-radius:8px}
+    .camera-float video{width:100%;height:100%;object-fit:cover}
+    .camera-float.mirror video{transform:scaleX(-1)}
+    .cam-bar{
+      position:absolute;top:3px;left:50%;transform:translateX(-50%);z-index:2;display:flex;gap:3px;opacity:.9;transition:opacity .15s;
+    }
+    .camera-float:hover .cam-bar{opacity:1}
+    .cam-bar button{font-size:10px;padding:3px 5px;background:#08090ccc}
+    .corner{
+      position:absolute;width:14px;height:14px;right:0;bottom:0;background:#cbd5e1;border:2px solid #111;cursor:nwse-resize;z-index:3;
+    }
+    .modal{
+      position:fixed;inset:0;z-index:20;background:#0009;display:none;place-items:center;
+    }
+    .modal.open{display:grid}
+    .dialog{
+      width:min(480px,92vw);background:#17181d;border:1px solid #464851;border-radius:12px;padding:18px;
+    }
+    .dialog h3{margin:0 0 10px}
+    .dialog p{color:#aab1bf}
+    .dialog input,.dialog textarea{
+      width:100%;background:#0d0e11;border:1px solid #3c3e46;border-radius:6px;padding:8px;margin:5px 0;
+    }
+    .dialog textarea{min-height:80px}
+    .row{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}
+    .chat-panel{
+      display:none;position:fixed;right:14px;bottom:14px;width:300px;max-height:55vh;z-index:12;background:#14161b;border:1px solid #42444d;border-radius:10px;padding:10px;
+    }
+    .chat-panel.open{display:flex;flex-direction:column}
+    .chat-log{overflow:auto;min-height:90px;max-height:220px;color:#cdd5e1;font-size:12px}
+    .chat-compose{display:flex;gap:5px}
+    .chat-compose input{
+      min-width:0;flex:1;background:#0c0d10;border:1px solid #34363c;border-radius:5px;padding:6px;
+    }
+    .toast{
+      position:fixed;bottom:12px;left:50%;transform:translateX(-50%);z-index:30;background:#22242a;border:1px solid #454750;padding:9px 14px;border-radius:8px;display:none;
+    }
+    .toast.show{display:block}
+    .student-screen{
+      display:none;position:fixed;inset:0;z-index:15;background:#0b0d11;padding:14px;
+    }
+    .student-screen.open{display:flex;flex-direction:column}
+    .student-top{display:flex;align-items:center;gap:8px;padding-bottom:10px}
+    .student-video{flex:1;min-height:0;width:100%;object-fit:contain;background:#000;border-radius:8px}
+    .comfort{filter:sepia(.14)}
+    @media (max-width:850px){
+      .sidebar{width:180px;min-width:180px}
+      .sheet-wrap{min-width:500px;width:80vw}
+      .toolbar button{font-size:11px;padding:4px 6px}
+    }
+    @media print{
+      body{overflow:visible;background:#fff}
+      .sidebar,.toolbar,.subbar{display:none!important}
+      .stage{overflow:visible;background:white;padding:0}
+      .sheet-wrap{width:100%;height:100vh;box-shadow:none;page-break-after:always}
+    }
+  </style>
 </head>
-<body><div class="app"><aside class="sidebar"><div class="brand">Teaching Board</div><div class="section">BOARD</div><div class="themes" id="themes"></div><div class="small">Custom board colour <input id="boardColor" type="color" value="#ffffff" style="float:right;width:30px;height:22px;border:0;background:none"></div><div class="small">Line gap <span id="gapVal" style="float:right">30px</span></div><input id="gap" class="range" type="range" min="18" max="60" value="30"><div class="section">TOOLS</div><button id="cursor" style="width:100%;text-align:left">⌖ Cursor On <span style="float:right;color:#2c6">●</span></button><div class="small">Cursor size</div><input class="range" type="range" min="1" max="30" value="8"><div class="section">MARKERS</div><div class="swatchbox"><div class="small">Ink colour <span id="hex" style="float:right">#111827</span></div><div class="swatchgrid" id="colors"></div><input id="customInk" type="color" value="#111827" style="width:25px;height:24px;padding:0;margin-top:6px;border:0;background:none"></div><div class="tool-list" id="tools"></div><div class="small">Size <span id="sizeLabel" style="float:right">3px</span></div><input id="size" class="range" type="range" min="1" max="24" value="3"><div class="section">RECORDING</div><div class="record"><div class="row"><button id="fullMode">▣ Full Board</button><button id="micTest">♩ Mic</button></div><p>Board + camera + selected mic voice; no system/media audio</p><p>For USB-C / Digitek mic, choose it below and test it before recording.</p><div class="small">MIC INPUT <button id="rescan">Rescan</button></div><select id="mic"><option value="">Choose a microphone</option></select><div id="micStatus">Selected: No microphone selected</div><button id="testMic" style="width:100%;margin-top:7px">Test selected mic</button><div id="status" style="color:#4ade80;margin-top:8px">● Ready</div><button id="record" style="width:100%;margin-top:8px">🔴 Record Board</button></div></aside><main class="workspace"><div class="toolbar"><button id="undo">← Undo</button><button id="clear" style="color:#fbbf24">Clear</button><button id="camToggle" style="color:#38bdf8">Show Cam</button><button id="openFile" style="color:#fbbf24">Open File</button><button id="files">Files</button><button id="live" style="color:#c084fc">Go Live</button><button id="dpp" style="color:#fbbf24">DPP</button><button id="students" style="color:#2dd4bf">Students</button><button id="full">Fullscreen</button><button id="comfort">Eye Comfort</button><button id="export" style="color:#38bdf8">Export PDF</button><button id="topRecord">🔴 Record</button><div class="spacer"></div><div class="palrow" id="topColors"></div></div><div class="subbar"><button id="prev">‹</button><span id="pageLabel">Page 1 / 1</span><button id="next">›</button><button id="newPage" style="color:#4ade80">+ New Page</button><div class="spacer"></div><select id="paper"><option value="lined">Notebook Lines</option><option value="blank">Blank</option><option value="grid">Grid</option><option value="dotted">Dots</option></select><button id="minus">−</button><span id="zoomLabel">100%</span><button id="plus">+</button><button id="lock">🔓 Lock</button></div><section class="stage" id="stage"><div id="pages"></div></section></main></div>
-<div class="camera-float rect" id="cameraBox"><div class="cam-bar"><button id="shape">▭</button><button id="mirror">↔</button><button id="camSmaller" title="Make camera smaller" aria-label="Make camera smaller">−</button><button id="camSize" title="Make camera bigger" aria-label="Make camera bigger">＋</button><button id="camClose">×</button></div><video id="cameraVideo" autoplay muted playsinline></video><span class="corner" id="resize"></span></div>
-<div class="modal" id="modal"><div class="dialog"><h3 id="modalTitle"></h3><div id="modalBody"></div><div class="row" style="justify-content:flex-end"><button id="modalClose">Cancel</button><button id="modalOK" class="active">OK</button></div></div></div><div class="chat-panel" id="chat"><b id="chatTitle">Class chat</b><div class="chat-log" id="chatLog"></div><div class="chat-compose"><input id="chatInput" placeholder="Ask a question…"><button id="sendChat">Send</button></div></div><div class="student-screen" id="studentScreen"><div class="student-top"><b>Teaching Board — Live class</b><div class="spacer"></div><button id="raise">✋ Raise hand</button><button id="askMic">🎙 Ask to speak</button><button id="studentChat">💬 Chat</button><button id="leave">Leave</button></div><video class="student-video" id="studentVideo" autoplay playsinline></video></div><input id="fileInput" type="file" accept="image/*,.txt,.md" hidden><div class="toast" id="toast"></div>
-<script>
-(()=>{'use strict';
-const colors=['#111827','#4b5563','#fff','#ef4444','#3b82f6','#22c55e','#f97316','#a855f7','#eab308','#ec4899','#06b6d4','#f59e0b'];const themeDefs=[['White','#fff','#d8e1ee','lined'],['Lined','#fff','#cad6e5','lined'],['Sepia','#f3e7cf','#d9c8a9','lined'],['Dark','#15171c','#343a46','lined'],['Dark ...','#10131b','#282f40','grid'],['Green','#e9f4e9','#bfd8bf','lined']];const toolDefs=[['Laser Pointer','40 sec','#ff1744'],['Soft Brush','4px','#f97316'],['Ink Flow','3px','#06b6d4'],['Neon Glow','3px','#ec4899'],['Writing Marker','4px','#f59e0b'],['Auto Smooth','2.5px','#94a3b8'],['Gel Pen','2px','#fb7185'],['Sketch Pen','1.8px','#fb923c'],['Soft Marker','5px','#4ade80'],['Writing Pen','3px','#60a5fa'],['Fountain Pen','2px','#e879f9'],['Calligraphy','3px','#facc15'],['Eraser','6px','#6b7280']];const $=s=>document.querySelector(s);let pages=[newPage()],current=0,ink='#111827',tool='Auto Smooth',size=3,zoom=100,locked=false,cursor=false,cameraStream=null,recorder=null,recording=false,peer=null,roomId=null,connections=[],liveStream=null,studentPeer=null,teacherConn=null,studentMic=null,teacherMicAudio=null,camShape=0,chatOpen=false;
-function newPage(){return{strokes:[],paper:'lined',bg:'#fff',rule:'#d8e1ee'}}function toast(s){const t=$('#toast');t.textContent=s;t.style.display='block';setTimeout(()=>t.style.display='none',2600)}function modal(title,html,ok='OK,',cb){$('#modalTitle').textContent=title;$('#modalBody').innerHTML=html;$('#modal').classList.add('open');$('#modalOK').textContent=ok;$('#modalOK').onclick=()=>{cb?.();$('#modal').classList.remove('open')};$('#modalClose').onclick=()=>$('#modal').classList.remove('open')}
-const pagesEl=$('#pages');function render(){pagesEl.innerHTML='';pages.forEach((p,i)=>{const w=document.createElement('div');w.className='sheet-wrap';w.style.transform=`scale(${zoom/100})`;w.style.transformOrigin='top center';w.style.marginBottom=`${1200*(zoom/100)-1200}px`;const tag=document.createElement('div');tag.className='page-tag';tag.textContent=`Page ${i+1}`;const sh=document.createElement('div');sh.className='sheet '+(p.paper==='blank'?'blank':p.paper==='grid'?'grid':p.paper==='dotted'?'dotted':'');sh.style.setProperty('--paper',p.bg);sh.style.setProperty('--rule',p.rule);sh.style.setProperty('--gap',$('#gap').value+'px');sh.style.backgroundColor=p.bg;const c=document.createElement('canvas');c.width=850;c.height=1200;c.dataset.page=i;sh.append(c);w.append(tag,sh);pagesEl.append(w);draw(i);attach(c)});$('#pageLabel').textContent=`Page ${current+1} / ${pages.length}`;$('#paper').value=pages[current].paper}
-function draw(i){const c=pagesEl.querySelector(`canvas[data-page="${i}"]`);if(!c)return;const x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);for(const s of pages[i].strokes){if(!s.points.length)continue;x.save();x.globalCompositeOperation=s.tool==='Eraser'?'destination-out':'source-over';x.strokeStyle=s.color;x.lineWidth=s.width;x.lineCap='round';x.lineJoin='round';if(s.tool==='Neon Glow'){x.shadowColor=s.color;x.shadowBlur=14}if(s.tool==='Soft Brush')x.globalAlpha=.7;x.beginPath();x.moveTo(s.points[0].x,s.points[0].y);for(let n=1;n<s.points.length;n++)x.lineTo(s.points[n].x,s.points[n].y);if(s.points.length===1)x.lineTo(s.points[0].x+.1,s.points[0].y+.1);x.stroke();x.restore()}}
-function attach(c){let stroke=null;function pos(e){const r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*850/r.width,y:(e.clientY-r.top)*1200/r.height}}c.onpointerdown=e=>{if(locked||cursor)return;e.preventDefault();c.setPointerCapture(e.pointerId);stroke={color:ink,width:tool==='Eraser'?Math.max(8,size):size,tool,points:[pos(e)]};pages[+c.dataset.page].strokes.push(stroke);draw(+c.dataset.page);broadcastBoard()};c.onpointermove=e=>{if(stroke){stroke.points.push(pos(e));draw(+c.dataset.page);broadcastBoard()}};c.onpointerup=c.onpointercancel=()=>stroke=null}
-function setInk(c){ink=c;$('#hex').textContent=c.toUpperCase();document.querySelectorAll('.swatch').forEach(b=>b.classList.toggle('sel',b.dataset.c===c))}function buildSwatches(el){colors.forEach(c=>{const b=document.createElement('button');b.className='swatch';b.style.background=c;b.dataset.c=c;b.onclick=()=>setInk(c);el.append(b)})}buildSwatches($('#colors'));buildSwatches($('#topColors'));setInk(ink);
-themeDefs.forEach(([n,bg,rule,paper],idx)=>{const b=document.createElement('button');b.textContent=n;b.onclick=()=>{pages[current].bg=bg;pages[current].rule=rule;pages[current].paper=paper;render();$('#themes').querySelectorAll('button').forEach(z=>z.classList.remove('active'));b.classList.add('active')};b.className=idx===0?'active':'';$('#themes').append(b)});toolDefs.forEach(([n,d,c])=>{const b=document.createElement('button');b.className='tool'+(n===tool?' sel':'');b.style.setProperty('--c',c);b.innerHTML=`${n}<small>${d}</small>`;b.onclick=()=>{tool=n;$('#tools').querySelectorAll('button').forEach(z=>z.classList.remove('sel'));b.classList.add('sel')};$('#tools').append(b)});
-$('#customInk').oninput=e=>setInk(e.target.value);$('#size').oninput=e=>{$('#sizeLabel').textContent=e.target.value+'px';size=+e.target.value};$('#boardColor').oninput=e=>{pages[current].bg=e.target.value;render()};$('#gap').oninput=e=>{$('#gapVal').textContent=e.target.value+'px';render()};$('#paper').onchange=e=>{pages[current].paper=e.target.value;render()};$('#undo').onclick=()=>{pages[current].strokes.pop();draw(current);broadcastBoard()};$('#clear').onclick=()=>modal('Clear page?','<p>Remove all ink from this page?</p>','Clear',()=>{pages[current].strokes=[];draw(current);broadcastBoard()});$('#newPage').onclick=()=>{pages.push(newPage());current=pages.length-1;render()};$('#prev').onclick=()=>{if(current){current--;render()}};$('#next').onclick=()=>{if(current<pages.length-1){current++;render()}};$('#plus').onclick=()=>setZoom(10);$('#minus').onclick=()=>setZoom(-10);function setZoom(n){zoom=Math.max(50,Math.min(150,zoom+n));$('#zoomLabel').textContent=zoom+'%';render()}$('#lock').onclick=()=>{locked=!locked;$('#lock').textContent=locked?'🔒 Locked':'🔓 Lock'};$('#cursor').onclick=()=>{cursor=!cursor;$('#cursor').classList.toggle('active',cursor);toast(cursor?'Cursor mode':'Drawing mode')};$('#full').onclick=()=>document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen?.();$('#comfort').onclick=()=>document.body.classList.toggle('comfort');$('#export').onclick=()=>window.print();
-function startCam(){navigator.mediaDevices.getUserMedia({video:true,audio:false}).then(s=>{cameraStream=s;$('#cameraVideo').srcObject=s;$('#cameraBox').classList.add('on');$('#camToggle').textContent='Hide Cam'}).catch(()=>toast('Camera permission denied or camera unavailable'))}$('#camToggle').onclick=()=>{if(cameraStream){cameraStream.getTracks().forEach(t=>t.stop());cameraStream=null;$('#cameraBox').classList.remove('on');$('#camToggle').textContent='Show Cam'}else startCam()};$('#camClose').onclick=()=>$('#camToggle').click();$('#mirror').onclick=()=>$('#cameraBox').classList.toggle('mirror');$('#shape').onclick=()=>{camShape=(camShape+1)%3;$('#cameraBox').classList.remove('circle','square','rect');$('#cameraBox').classList.add(['rect','circle','square'][camShape]);$('#shape').textContent=['▭','●','□'][camShape]};$('#camSize').onclick=()=>{const b=$('#cameraBox');b.style.width=(b.offsetWidth+45)+'px';b.style.height=(b.offsetHeight+30)+'px'};$('#camSmaller').onclick=()=>{const b=$('#cameraBox');b.style.width=Math.max(100,b.offsetWidth-45)+'px';b.style.height=Math.max(70,b.offsetHeight-30)+'px'};
-let moving=false,dx=0,dy=0;$('#cameraBox').addEventListener('pointerdown',e=>{if(e.target.closest('button')||e.target.id==='resize')return;moving=true;const r=$('#cameraBox').getBoundingClientRect();dx=e.clientX-r.left;dy=e.clientY-r.top;$('#cameraBox').setPointerCapture(e.pointerId)});$('#cameraBox').addEventListener('pointermove',e=>{if(moving){$('#cameraBox').style.left=Math.max(0,Math.min(innerWidth-70,e.clientX-dx))+'px';$('#cameraBox').style.top=Math.max(0,Math.min(innerHeight-50,e.clientY-dy))+'px'}});$('#cameraBox').addEventListener('pointerup',()=>moving=false);$('#resize').onpointerdown=e=>{e.stopPropagation();e.preventDefault();const b=$('#cameraBox'),sx=e.clientX,sy=e.clientY,sw=b.offsetWidth,sh=b.offsetHeight;const move=a=>{b.style.width=Math.max(100,sw+a.clientX-sx)+'px';b.style.height=Math.max(70,sh+a.clientY-sy)+'px'};const end=()=>{window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',end)};window.addEventListener('pointermove',move);window.addEventListener('pointerup',end)};
-$('#openFile').onclick=()=>$('#fileInput').click();$('#fileInput').onchange=e=>{const f=e.target.files[0];if(!f)return;if(f.type.startsWith('image/')){const im=new Image();im.onload=()=>{const c=pagesEl.querySelector(`canvas[data-page="${current}"]`);c.getContext('2d').drawImage(im,0,0,c.width,c.height);toast('Image added to page')};im.src=URL.createObjectURL(f)}else{const r=new FileReader();r.onload=()=>modal('Open text',`<textarea id="fileText"></textarea>`,'Add',()=>{const c=pagesEl.querySelector(`canvas[data-page="${current}"]`);const x=c.getContext('2d');x.fillStyle=ink;x.font='20px sans-serif';x.fillText(String(r.result).slice(0,100),30,80)});r.readAsText(f)}e.target.value=''};
-function download(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}$('#files').onclick=()=>modal('Board files','<p>Save a portable copy of this board to your computer, or open a saved board JSON.</p><div class="row"><button id="save">Download board JSON</button><button id="load">Open board JSON</button><input id="loadInput" type="file" accept="application/json" hidden></div>','Done');$('#modalBody').addEventListener('click',e=>{if(e.target.id==='save')download(new Blob([JSON.stringify({pages})],{type:'application/json'}),'teaching-board.json');if(e.target.id==='load')$('#loadInput').click()});$('#modalBody').addEventListener('change',e=>{if(e.target.id==='loadInput'){const r=new FileReader();r.onload=()=>{try{pages=JSON.parse(r.result).pages;current=0;render();$('#modal').classList.remove('open')}catch{toast('Invalid board file')}};r.readAsText(e.target.files[0])}});
-// Save an actual rendered board/camera/mic recording as a local WebM download.
-function compositeStream(){const c=document.createElement('canvas');c.width=1280;c.height=720;const x=c.getContext('2d');let active=true;function frame(){if(!active)return;x.fillStyle='#111';x.fillRect(0,0,c.width,c.height);const page=pagesEl.querySelector(`canvas[data-page="${current}"]`);x.fillStyle=pages[current].bg;x.fillRect(0,0,c.width,c.height);if(pages[current].paper!=='blank'){x.strokeStyle=pages[current].rule;x.lineWidth=1;for(let y=30;y<c.height;y+=30){x.beginPath();x.moveTo(0,y);x.lineTo(c.width,y);x.stroke()}}if(page)x.drawImage(page,0,0,c.width,c.height);if(cameraStream&&$('#cameraBox').classList.contains('on')){const box=$('#cameraBox'),r=box.getBoundingClientRect(),ar=innerWidth,scale=c.width/ar,bx=r.left*scale,by=r.top*scale,bw=r.width*scale,bh=r.height*scale;x.save();if(box.classList.contains('circle')){x.beginPath();x.ellipse(bx+bw/2,by+bh/2,bw/2,bh/2,0,0,Math.PI*2);x.clip()}if(box.classList.contains('mirror')){x.translate(bx+bw,by);x.scale(-1,1);x.drawImage($('#cameraVideo'),0,0,bw,bh)}else x.drawImage($('#cameraVideo'),bx,by,bw,bh);x.restore()}requestAnimationFrame(frame)}frame();const out=c.captureStream(25);return{stream:out,stop:()=>{active=false;out.getTracks().forEach(t=>t.stop())}}}
-async function recordToggle(){if(recording){recorder.stop();return}try{const made=compositeStream(),tracks=[...made.stream.getVideoTracks()];if($('#mic').value){const aud=await navigator.mediaDevices.getUserMedia({audio:{deviceId:{exact:$('#mic').value}}});aud.getAudioTracks().forEach(t=>tracks.push(t))}const stream=new MediaStream(tracks);recorder=new MediaRecorder(stream);const chunks=[];recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};recorder.onstop=()=>{download(new Blob(chunks,{type:recorder.mimeType||'video/webm'}),'teaching-board-recording.webm');made.stop();stream.getAudioTracks().forEach(t=>t.stop());recording=false;$('#record').textContent='🔴 Record Board';$('#topRecord').textContent='🔴 Record';$('#status').textContent='● Ready';toast('Recording downloaded to your device')};recorder.start();recording=true;$('#record').textContent='■ Stop Recording';$('#topRecord').textContent='■ Stop';$('#status').textContent='● Recording'}catch(e){toast('Recording requires camera/mic permissions and a supported browser')}}$('#record').onclick=recordToggle;$('#topRecord').onclick=recordToggle;$('#fullMode').onclick=recordToggle;$('#micTest').onclick=()=>$('#testMic').click();$('#testMic').onclick=async()=>{try{const s=await navigator.mediaDevices.getUserMedia({audio:$('#mic').value?{deviceId:{exact:$('#mic').value}}:true});$('#status').textContent='● Mic test active';setTimeout(()=>{s.getTracks().forEach(t=>t.stop());$('#status').textContent='● Ready'},4000)}catch{toast('Select a microphone and allow browser permission')}};async function scan(){try{let ds=await navigator.mediaDevices.enumerateDevices();$('#mic').innerHTML='<option value="">Choose a microphone</option>'+ds.filter(d=>d.kind==='audioinput').map((d,i)=>`<option value="${d.deviceId}">${d.label||'Microphone '+(i+1)}</option>`).join('')}catch{}}$('#rescan').onclick=scan;$('#mic').onchange=()=>$('#micStatus').textContent=$('#mic').value?'Selected: '+$('#mic').selectedOptions[0].textContent:'Selected: No microphone selected';scan();
-// Wireless phone camera: use an IP-camera/WebRTC camera URL reachable on the same Wi-Fi.
-function loadPeer(){return new Promise((resolve,reject)=>{if(window.Peer)return resolve();const s=document.createElement('script');s.src='https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';s.onload=resolve;s.onerror=reject;document.head.append(s)})}
-$('#students').onclick=()=>modal('Students & phone camera','<p><b>Phone camera over USB:</b> connect a UVC/webcam-enabled phone to the computer and allow it in browser camera permissions. USB file-transfer/MTP alone does not provide a live camera.</p><p><b>Phone camera over Wi‑Fi:</b> open an IP camera/WebRTC camera app on the phone and enter its reachable video URL. Both devices must be on the same network; browser-compatible WebRTC/HLS/MJPEG URLs work best.</p><input id="wifiUrl" placeholder="https://… or http://phone-ip:port/video"><div class="row"><button id="connectWifi">Connect Wi‑Fi camera</button><button id="chooseDevice">Choose USB / browser camera</button></div>','Done');$('#modalBody').addEventListener('click',async e=>{if(e.target.id==='connectWifi'){const url=$('#wifiUrl').value;try{$('#cameraVideo').srcObject=null;$('#cameraVideo').src=url;await $('#cameraVideo').play();$('#cameraBox').classList.add('on');$('#camToggle').textContent='Hide Cam';$('#modal').classList.remove('open');toast('Wi-Fi camera connected')}catch{toast('Could not play camera URL. Use a browser-supported stream URL.')}}if(e.target.id==='chooseDevice'){const old=cameraStream;try{const s=await navigator.mediaDevices.getUserMedia({video:true});if(old)old.getTracks().forEach(t=>t.stop());cameraStream=s;$('#cameraVideo').srcObject=s;$('#cameraBox').classList.add('on');$('#modal').classList.remove('open')}catch{toast('No available USB/browser camera')}}});
-// WebRTC live class: teacher link, student video/audio, chat, hand raise, permission-based student microphone.
-function sendToAll(message){connections.forEach(c=>{if(c.open)c.send(message)})}function receive(conn){connections.push(conn);conn.on('open',()=>{conn.send({type:'welcome',teacher:peer?.id,permissions:$('#allowMic')?.checked||false});sendToAll({type:'roster',count:connections.length})});conn.on('data',async m=>{if(m.type==='chat'){chatLine('Student: '+m.text);sendToAll({type:'chat',text:m.text,from:'Student'})}if(m.type==='hand'){chatLine('✋ Student raised a hand');toast('A student raised their hand')}if(m.type==='mic-request'){chatLine('🎙 Student requested microphone permission');modal('Allow student microphone?','<p>Allow this student to send live audio to the teacher?</p>','Allow',()=>{conn.send({type:'mic-allowed'});toast('Microphone permission allowed')});$('#modalClose').onclick=()=>conn.send({type:'mic-denied'})}if(m.type==='board-sync'){}});conn.on('close',()=>{connections=connections.filter(c=>c!==conn);sendToAll({type:'roster',count:connections.length})})}
-function chatLine(s){const el=$('#chatLog');el.innerHTML+=`<div>${escapeHtml(s)}</div>`;el.scrollTop=el.scrollHeight}function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function broadcastBoard(){if(!liveStream)return;sendToAll({type:'board-update',pages,current})}
-function startLive(){loadPeer().then(()=>{peer=new Peer();peer.on('open',id=>{roomId=id;const link=location.href.split('?')[0]+'?join='+encodeURIComponent(id);modal('Live class is ready',`<p>Send this join link to students. Students need a modern browser and camera/microphone permissions only if they ask to speak.</p><input id="shareLink" value="${link}" readonly><div class="row"><button id="copyLink">Copy student link</button><label style="display:flex;align-items:center;gap:5px"><input id="allowMic" type="checkbox" checked>Allow students to request mic</label></div><p>Connected students: <span id="studentCount">0</span></p>`,'Close');$('#modalBody').addEventListener('click',e=>{if(e.target.id==='copyLink'){navigator.clipboard?.writeText(link);toast('Student link copied')}});liveStream=compositeStream().stream;peer.on('connection',receive);peer.on('call',call=>{call.answer();call.on('stream',s=>{teacherMicAudio=new Audio();teacherMicAudio.srcObject=s;teacherMicAudio.play().catch(()=>{});chatLine('Student microphone connected')})});$('#live').textContent='End Live';toast('Live class started')})}).catch(()=>toast('Live needs an internet connection to PeerJS signaling'))}
-$('#live').onclick=()=>{if(liveStream){liveStream.getTracks().forEach(t=>t.stop());peer?.destroy();peer=null;liveStream=null;connections=[];$('#live').textContent='Go Live';toast('Live class ended')}else startLive()};
-function startStudent(id){loadPeer().then(()=>{studentPeer=new Peer();studentPeer.on('open',sid=>{teacherConn=studentPeer.connect(id);teacherConn.on('open',()=>{teacherConn.send({type:'join',id:sid});$('#studentScreen').classList.add('open');$('#chat').classList.add('open')});teacherConn.on('data',async m=>{if(m.type==='mic-allowed'){try{studentMic=await navigator.mediaDevices.getUserMedia({audio:true});studentPeer.call(id,studentMic)}catch{toast('Microphone permission denied')}}if(m.type==='mic-denied')toast('Teacher declined mic request');if(m.type==='chat')chatLine('Teacher: '+m.text);if(m.type==='board-update')drawStudentBoard(m);if(m.type==='welcome'&&m.permissions)$('#askMic').disabled=false})});studentPeer.on('call',call=>{call.answer();call.on('stream',s=>{$('#studentVideo').srcObject=s;$('#studentVideo').muted=false})});studentPeer.on('error',()=>toast('Could not connect. Ask teacher for a fresh link.'))})}
-function drawStudentBoard(m){const v=$('#studentVideo');if(m.pages){v.poster='';/* board video is sent continuously; canvas state is retained for data fallback */}}
-if(new URLSearchParams(location.search).has('join')){const id=new URLSearchParams(location.search).get('join');setTimeout(()=>startStudent(id),300)}$('#raise').onclick=()=>{teacherConn?.send({type:'hand'});toast('Hand raised')};$('#askMic').onclick=()=>{teacherConn?.send({type:'mic-request'});toast('Asked teacher for mic permission')};$('#studentChat').onclick=()=>{$('#chat').classList.toggle('open');$('#chatTitle').textContent='Class chat'};$('#leave').onclick=()=>{teacherConn?.close();studentPeer?.destroy();studentMic?.getTracks().forEach(t=>t.stop());$('#studentScreen').classList.remove('open');toast('You left the class')};$('#sendChat').onclick=()=>{const t=$('#chatInput').value.trim();if(!t)return;if(teacherConn)teacherConn.send({type:'chat',text:t});else sendToAll({type:'chat',text:t});chatLine('You: '+t);$('#chatInput').value=''};$('#chatInput').onkeydown=e=>{if(e.key==='Enter')$('#sendChat').click()};$('#dpp').onclick=()=>modal('DPP','<p>Daily Practice Problems — draft a question for students.</p><textarea id="dppText" placeholder="Write a problem…"></textarea>','Share',()=>{const t=$('#dppText')?.value;if(t)sendToAll({type:'chat',text:'DPP: '+t})});
-render();})();
-</script></body></html>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">Teaching Board</div>
+
+      <div class="section">BOARD</div>
+      <div class="themes" id="themes"></div>
+
+      <div class="small">
+        Custom board colour
+        <input id="boardColor" type="color" value="#ffffff" style="float:right;width:30px;height:22px;border:0;background:none">
+      </div>
+
+      <div class="small">
+        Line gap <span id="gapVal" style="float:right">30px</span>
+      </div>
+      <input id="gap" class="range" type="range" min="18" max="60" value="30">
+
+      <div class="section">TOOLS</div>
+      <button id="cursor" style="width:100%;text-align:left">⌖ Cursor On <span style="float:right;color:#2c6">●</span></button>
+      <div class="small">Cursor size</div>
+      <input class="range" type="range" min="1" max="30" value="8">
+
+      <div class="section">MARKERS</div>
+      <div class="swatchbox">
+        <div class="small">Ink colour <span id="hex" style="float:right">#111827</span></div>
+        <div class="swatchgrid" id="colors"></div>
+        <input id="customInk" type="color" value="#111827" style="width:25px;height:24px;padding:0;margin-top:6px;border:0;background:none">
+      </div>
+
+      <div class="tool-list" id="tools"></div>
+
+      <div class="small">Size <span id="sizeLabel" style="float:right">3px</span></div>
+      <input id="size" class="range" type="range" min="1" max="24" value="3">
+
+      <div class="small">Laser duration <span id="laserLabel" style="float:right">2 sec</span></div>
+      <input id="laserDuration" class="range" type="range" min="1" max="15" value="2">
+
+      <div class="section">RECORDING</div>
+      <div class="record">
+        <div class="row">
+          <button id="fullMode">▣ Full Board</button>
+          <button id="micTest">♩ Mic</button>
+        </div>
+        <p>Board + camera + selected mic voice; no system/media audio</p>
+        <p>For USB-C / Digitek mic, choose it below and test it before recording.</p>
+
+        <div class="small">
+          MIC INPUT
+          <button id="rescan">Rescan</button>
+        </div>
+        <select id="mic">
+          <option value="">Choose a microphone</option>
+        </select>
+
+        <div id="micStatus">Selected: No microphone selected</div>
+        <button id="testMic" style="width:100%;margin-top:7px">Test selected mic</button>
+
+        <div id="status" style="color:#4ade80;margin-top:8px">● Ready</div>
+        <button id="record" style="width:100%;margin-top:8px">🔴 Record Board</button>
+      </div>
+    </aside>
+
+    <main class="workspace">
+      <div class="toolbar">
+        <button id="undo">← Undo</button>
+        <button id="clear" style="color:#fbbf24">Clear</button>
+        <button id="camToggle" style="color:#38bdf8">Show Cam</button>
+        <button id="openFile" style="color:#fbbf24">Open File</button>
+        <button id="files">Files</button>
+        <button id="live" style="color:#c084fc">Go Live</button>
+        <button id="dpp" style="color:#fbbf24">DPP</button>
+        <button id="students" style="color:#2dd4bf">Students</button>
+        <button id="full">Fullscreen</button>
+        <button id="comfort">Eye Comfort</button>
+        <button id="export" style="color:#38bdf8">Export PDF</button>
+        <button id="topRecord">🔴 Record</button>
+        <div class="spacer"></div>
+        <div class="palrow" id="topColors"></div>
+      </div>
+
+      <div class="subbar">
+        <button id="prev">‹</button>
+        <span id="pageLabel">Page 1 / 1</span>
+        <button id="next">›</button>
+        <button id="newPage" style="color:#4ade80">+ New Page</button>
+        <div class="spacer"></div>
+        <select id="paper">
+          <option value="lined">Notebook Lines</option>
+          <option value="blank">Blank</option>
+          <option value="grid">Grid</option>
+          <option value="dotted">Dots</option>
+        </select>
+        <button id="minus">−</button>
+        <span id="zoomLabel">100%</span>
+        <button id="plus">+</button>
+        <button id="lock">🔓 Lock</button>
+      </div>
+
+      <section class="stage" id="stage">
+        <div id="pages"></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="camera-float rect" id="cameraBox">
+    <div class="cam-bar">
+      <button id="shape">▭</button>
+      <button id="mirror">↔</button>
+      <button id="camSmaller" title="Make camera smaller" aria-label="Make camera smaller">−</button>
+      <button id="camSize" title="Make camera bigger" aria-label="Make camera bigger">＋</button>
+      <button id="camClose">×</button>
+    </div>
+    <video id="cameraVideo" autoplay muted playsinline></video>
+    <span class="corner" id="resize"></span>
+  </div>
+
+  <div class="modal" id="modal">
+    <div class="dialog">
+      <h3 id="modalTitle"></h3>
+      <div id="modalBody"></div>
+      <div class="row" style="justify-content:flex-end">
+        <button id="modalClose">Cancel</button>
+        <button id="modalOK" class="active">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-panel" id="chat">
+    <b id="chatTitle">Class chat</b>
+    <div class="chat-log" id="chatLog"></div>
+    <div class="chat-compose">
+      <input id="chatInput" placeholder="Ask a question…">
+      <button id="sendChat">Send</button>
+    </div>
+  </div>
+
+  <div class="student-screen" id="studentScreen">
+    <div class="student-top">
+      <b>Teaching Board — Live class</b>
+      <div class="spacer"></div>
+      <button id="raise">✋ Raise hand</button>
+      <button id="askMic">🎙 Ask to speak</button>
+      <button id="studentChat">💬 Chat</button>
+      <button id="leave">Leave</button>
+    </div>
+    <video class="student-video" id="studentVideo" autoplay playsinline></video>
+  </div>
+
+  <input id="fileInput" type="file" accept="image/*,.txt,.md,application/pdf" hidden>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const colors = ['#111827','#4b5563','#fff','#ef4444','#3b82f6','#22c55e','#f97316','#a855f7','#eab308','#ec4899','#06b6d4','#f59e0b'];
+      const themeDefs = [
+        ['White','#fff','#d8e1ee','lined'],
+        ['Lined','#fff','#cad6e5','lined'],
+        ['Sepia','#f3e7cf','#d9c8a9','lined'],
+        ['Dark','#15171c','#343a46','lined'],
+        ['Dark Grid','#10131b','#282f40','grid'],
+        ['Green','#e9f4e9','#bfd8bf','lined']
+      ];
+
+      const toolDefs = [
+        ['Laser Pointer','40 sec','#ff1744'],
+        ['Soft Brush','4px','#f97316'],
+        ['Ink Flow','3px','#06b6d4'],
+        ['Neon Glow','3px','#ec4899'],
+        ['Writing Marker','4px','#f59e0b'],
+        ['Auto Smooth','2.5px','#94a3b8'],
+        ['Gel Pen','2px','#fb7185'],
+        ['Sketch Pen','1.8px','#fb923c'],
+        ['Soft Marker','5px','#4ade80'],
+        ['Writing Pen','3px','#60a5fa'],
+        ['Fountain Pen','2px','#e879f9'],
+        ['Calligraphy','3px','#facc15'],
+        ['Eraser','6px','#6b7280']
+      ];
+
+      const $ = (s) => document.querySelector(s);
+
+      let pages = [newPage()];
+      let current = 0;
+      let ink = '#111827';
+      let tool = 'Auto Smooth';
+      let size = 3;
+      let zoom = 100;
+      let locked = false;
+      let cursor = false;
+      let cameraStream = null;
+      let recorder = null;
+      let recording = false;
+      let peer = null;
+      let roomId = null;
+      let connections = [];
+      let liveStream = null;
+      let studentPeer = null;
+      let teacherConn = null;
+      let studentMic = null;
+      let teacherMicAudio = null;
+      let camShape = 0;
+      let chatOpen = false;
+      let laserDuration = 2;
+      const pdfImageCache = new Map();
+
+      function newPage() {
+        return {
+          strokes: [],
+          paper: 'lined',
+          bg: '#fff',
+          rule: '#d8e1ee',
+          pdfImage: null
+        };
+      }
+
+      function toast(s) {
+        const t = $('#toast');
+        t.textContent = s;
+        t.style.display = 'block';
+        setTimeout(() => t.style.display = 'none', 2600);
+      }
+
+      function modal(title, html, ok = 'OK', cb) {
+        $('#modalTitle').textContent = title;
+        $('#modalBody').innerHTML = html;
+        $('#modal').classList.add('open');
+        $('#modalOK').textContent = ok;
+        $('#modalOK').onclick = () => {
+          cb && cb();
+          $('#modal').classList.remove('open');
+        };
+        $('#modalClose').onclick = () => $('#modal').classList.remove('open');
+      }
+
+      const pagesEl = $('#pages');
+
+      function render() {
+        pagesEl.innerHTML = '';
+
+        pages.forEach((page, i) => {
+          const wrap = document.createElement('div');
+          wrap.className = 'sheet-wrap';
+          wrap.style.transform = `scale(${zoom / 100})`;
+          wrap.style.transformOrigin = 'top center';
+          wrap.style.marginBottom = `${1200 * (zoom / 100) - 1200}px`;
+
+          const tag = document.createElement('div');
+          tag.className = 'page-tag';
+          tag.textContent = `Page ${i + 1}`;
+
+          const sheet = document.createElement('div');
+          sheet.className = 'sheet ' + (page.paper === 'blank' ? 'blank' : page.paper === 'grid' ? 'grid' : page.paper === 'dotted' ? 'dotted' : '');
+          sheet.style.setProperty('--paper', page.bg);
+          sheet.style.setProperty('--rule', page.rule);
+          sheet.style.setProperty('--gap', $('#gap').value + 'px');
+          sheet.style.backgroundColor = page.bg;
+
+          const c = document.createElement('canvas');
+          c.width = 850;
+          c.height = 1200;
+          c.dataset.page = i;
+          sheet.appendChild(c);
+
+          wrap.appendChild(tag);
+          wrap.appendChild(sheet);
+          pagesEl.appendChild(wrap);
+
+          draw(i);
+          attach(c);
+        });
+
+        $('#pageLabel').textContent = `Page ${current + 1} / ${pages.length}`;
+        $('#paper').value = pages[current].paper;
+      }
+
+      function draw(i) {
+        const c = pagesEl.querySelector(`canvas[data-page="${i}"]`);
+        if (!c) return;
+
+        const ctx = c.getContext('2d');
+        ctx.clearRect(0, 0, c.width, c.height);
+
+        const page = pages[i];
+
+        if (page.pdfImage) {
+          let img = pdfImageCache.get(page.pdfImage);
+          if (!img) {
+            img = new Image();
+            pdfImageCache.set(page.pdfImage, img);
+            img.onload = () => draw(i);
+            img.src = page.pdfImage;
+          }
+          if (img.complete && img.naturalWidth) {
+            ctx.drawImage(img, 0, 0, c.width, c.height);
+          }
+        }
+
+        for (const s of page.strokes) {
+          if (!s.points || !s.points.length) continue;
+
+          const isLaser = s.tool === 'Laser Pointer';
+          const remaining = isLaser
+            ? Math.max(0, (s.expiresAt - Date.now()) / (laserDuration * 1000))
+            : 1;
+
+          if (isLaser && remaining <= 0) continue;
+
+          ctx.save();
+          ctx.globalCompositeOperation = s.tool === 'Eraser' ? 'destination-out' : 'source-over';
+
+          ctx.strokeStyle = s.color;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          ctx.shadowBlur = 0;
+
+          switch (s.tool) {
+            case 'Laser Pointer':
+              ctx.lineWidth = s.width * 1.5;
+              ctx.globalAlpha = 0.9 * remaining;
+              ctx.shadowColor = s.color;
+              ctx.shadowBlur = 18;
+              break;
+            case 'Soft Brush':
+              ctx.lineWidth = s.width * 2.4;
+              ctx.globalAlpha = 0.35;
+              break;
+            case 'Ink Flow':
+              ctx.lineWidth = s.width * 1.3;
+              break;
+            case 'Neon Glow':
+              ctx.lineWidth = s.width;
+              ctx.shadowColor = s.color;
+              ctx.shadowBlur = 14;
+              break;
+            case 'Writing Marker':
+            case 'Soft Marker':
+              ctx.lineWidth = s.width * 2;
+              ctx.globalAlpha = 0.55;
+              break;
+            case 'Fountain Pen':
+              ctx.lineWidth = s.width * 1.4;
+              ctx.lineCap = 'square';
+              break;
+            case 'Calligraphy':
+              ctx.lineWidth = s.width * 1.8;
+              ctx.lineCap = 'square';
+              break;
+            case 'Sketch Pen':
+              ctx.lineWidth = s.width * 0.8;
+              ctx.globalAlpha = 0.8;
+              break;
+            case 'Eraser':
+              ctx.lineWidth = Math.max(8, s.width);
+              break;
+            default:
+              ctx.lineWidth = s.width;
+          }
+
+          ctx.beginPath();
+          ctx.moveTo(s.points[0].x, s.points[0].y);
+
+          if (s.tool === 'Auto Smooth' && s.points.length > 2) {
+            for (let n = 1; n < s.points.length - 1; n++) {
+              const midX = (s.points[n].x + s.points[n + 1].x) / 2;
+              const midY = (s.points[n].y + s.points[n + 1].y) / 2;
+              ctx.quadraticCurveTo(s.points[n].x, s.points[n].y, midX, midY);
+            }
+            const last = s.points[s.points.length - 1];
+            ctx.lineTo(last.x, last.y);
+          } else {
+            for (let n = 1; n < s.points.length; n++) {
+              ctx.lineTo(s.points[n].x, s.points[n].y);
+            }
+          }
+
+          if (s.points.length === 1) {
+            ctx.lineTo(s.points[0].x + 0.1, s.points[0].y + 0.1);
+          }
+
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+
+      function attach(c) {
+        let stroke = null;
+
+        function pos(e) {
+          const rect = c.getBoundingClientRect();
+          return {
+            x: (e.clientX - rect.left) * 850 / rect.width,
+            y: (e.clientY - rect.top) * 1200 / rect.height
+          };
+        }
+
+        c.onpointerdown = (e) => {
+          if (locked || cursor) return;
+          e.preventDefault();
+          c.setPointerCapture(e.pointerId);
+
+          stroke = {
+            color: ink,
+            width: tool === 'Eraser' ? Math.max(8, size) : size,
+            tool,
+            expiresAt: tool === 'Laser Pointer' ? Date.now() + laserDuration * 1000 : 0,
+            points: [pos(e)]
+          };
+
+          pages[+c.dataset.page].strokes.push(stroke);
+          draw(+c.dataset.page);
+          broadcastBoard();
+        };
+
+        c.onpointermove = (e) => {
+          if (!stroke) return;
+
+          stroke.points.push(pos(e));
+
+          if (stroke.tool === 'Laser Pointer') {
+            stroke.expiresAt = Date.now() + laserDuration * 1000;
+          }
+
+          draw(+c.dataset.page);
+          broadcastBoard();
+        };
+
+        c.onpointerup = c.onpointercancel = () => {
+          stroke = null;
+        };
+      }
+
+      function setInk(color) {
+        ink = color;
+        $('#hex').textContent = color.toUpperCase();
+        document.querySelectorAll('.swatch').forEach((b) => {
+          b.classList.toggle('sel', b.dataset.c === color);
+        });
+      }
+
+      function buildSwatches(el) {
+        colors.forEach((c) => {
+          const btn = document.createElement('button');
+          btn.className = 'swatch';
+          btn.style.background = c;
+          btn.dataset.c = c;
+          btn.onclick = () => setInk(c);
+          el.appendChild(btn);
+        });
+      }
+
+      buildSwatches($('#colors'));
+      buildSwatches($('#topColors'));
+      setInk(ink);
+
+      themeDefs.forEach(([name, bg, rule, paper], idx) => {
+        const btn = document.createElement('button');
+        btn.textContent = name;
+        btn.className = idx === 0 ? 'active' : '';
+        btn.onclick = () => {
+          pages[current].bg = bg;
+          pages[current].rule = rule;
+          pages[current].paper = paper;
+          render();
+          $('#themes').querySelectorAll('button').forEach((z) => z.classList.remove('active'));
+          btn.classList.add('active');
+        };
+        $('#themes').appendChild(btn);
+      });
+
+      toolDefs.forEach(([name, desc, color]) => {
+        const btn = document.createElement('button');
+        btn.className = 'tool' + (name === tool ? ' sel' : '');
+        btn.style.setProperty('--c', color);
+        btn.innerHTML = `${name}<small>${desc}</small>`;
+        btn.onclick = () => {
+          tool = name;
+          $('#tools').querySelectorAll('button').forEach((z) => z.classList.remove('sel'));
+          btn.classList.add('sel');
+        };
+        $('#tools').appendChild(btn);
+      });
+
+      $('#customInk').oninput = (e) => setInk(e.target.value);
+      $('#size').oninput = (e) => {
+        $('#sizeLabel').textContent = e.target.value + 'px';
+        size = +e.target.value;
+      };
+
+      $('#laserDuration').oninput = (e) => {
+        laserDuration = +e.target.value;
+        $('#laserLabel').textContent = laserDuration + ' sec';
+      };
+
+      $('#boardColor').oninput = (e) => {
+        pages[current].bg = e.target.value;
+        render();
+      };
+
+      $('#gap').oninput = (e) => {
+        $('#gapVal').textContent = e.target.value + 'px';
+        render();
+      };
+
+      $('#paper').onchange = (e) => {
+        pages[current].paper = e.target.value;
+        render();
+      };
+
+      $('#undo').onclick = () => {
+        if (pages[current].strokes.length) {
+          pages[current].strokes.pop();
+          draw(current);
+          broadcastBoard();
+        }
+      };
+
+      $('#clear').onclick = () => {
+        modal('Clear page?', '<p>Remove all ink from this page?</p>', 'Clear', () => {
+          pages[current].strokes = [];
+          draw(current);
+          broadcastBoard();
+        });
+      };
+
+      $('#newPage').onclick = () => {
+        pages.push(newPage());
+        current = pages.length - 1;
+        render();
+      };
+
+      $('#prev').onclick = () => {
+        if (current > 0) {
+          current--;
+          render();
+        }
+      };
+
+      $('#next').onclick = () => {
+        if (current < pages.length - 1) {
+          current++;
+          render();
+        }
+      };
+
+      function setZoom(delta) {
+        zoom = Math.max(50, Math.min(150, zoom + delta));
+        $('#zoomLabel').textContent = zoom + '%';
+        render();
+      }
+
+      $('#plus').onclick = () => setZoom(10);
+      $('#minus').onclick = () => setZoom(-10);
+
+      $('#lock').onclick = () => {
+        locked = !locked;
+        $('#lock').textContent = locked ? '🔒 Locked' : '🔓 Lock';
+      };
+
+      $('#cursor').onclick = () => {
+        cursor = !cursor;
+        $('#cursor').classList.toggle('active', cursor);
+        toast(cursor ? 'Cursor mode' : 'Drawing mode');
+      };
+
+      $('#full').onclick = () => {
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
+        } else {
+          document.documentElement.requestFullscreen?.();
+        }
+      };
+
+      $('#comfort').onclick = () => document.body.classList.toggle('comfort');
+      $('#export').onclick = () => window.print();
+
+      function startCam() {
+        navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+          .then((s) => {
+            cameraStream = s;
+            $('#cameraVideo').srcObject = s;
+            $('#cameraBox').classList.add('on');
+            $('#camToggle').textContent = 'Hide Cam';
+          })
+          .catch(() => toast('Camera permission denied or camera unavailable'));
+      }
+
+      $('#camToggle').onclick = () => {
+        if (cameraStream) {
+          cameraStream.getTracks().forEach((t) => t.stop());
+          cameraStream = null;
+          $('#cameraBox').classList.remove('on');
+          $('#camToggle').textContent = 'Show Cam';
+        } else {
+          startCam();
+        }
+      };
+
+      $('#camClose').onclick = () => $('#camToggle').click();
+      $('#mirror').onclick = () => $('#cameraBox').classList.toggle('mirror');
+      $('#shape').onclick = () => {
+        camShape = (camShape + 1) % 3;
+        $('#cameraBox').classList.remove('circle', 'square', 'rect');
+        $('#cameraBox').classList.add(['rect', 'circle', 'square'][camShape]);
+        $('#shape').textContent = ['▭', '●', '□'][camShape];
+      };
+
+      $('#camSize').onclick = () => {
+        const b = $('#cameraBox');
+        b.style.width = (b.offsetWidth + 45) + 'px';
+        b.style.height = (b.offsetHeight + 30) + 'px';
+      };
+
+      $('#camSmaller').onclick = () => {
+        const b = $('#cameraBox');
+        b.style.width = Math.max(100, b.offsetWidth - 45) + 'px';
+        b.style.height = Math.max(70, b.offsetHeight - 30) + 'px';
+      };
+
+      let moving = false;
+      let dx = 0;
+      let dy = 0;
+
+      $('#cameraBox').addEventListener('pointerdown', (e) => {
+        if (e.target.closest('button') || e.target.id === 'resize') return;
+        moving = true;
+        const rect = $('#cameraBox').getBoundingClientRect();
+        dx = e.clientX - rect.left;
+        dy = e.clientY - rect.top;
+        $('#cameraBox').setPointerCapture(e.pointerId);
+      });
+
+      $('#cameraBox').addEventListener('pointermove', (e) => {
+        if (!moving) return;
+        const box = $('#cameraBox');
+        box.style.left = Math.max(0, Math.min(window.innerWidth - 70, e.clientX - dx)) + 'px';
+        box.style.top = Math.max(0, Math.min(window.innerHeight - 50, e.clientY - dy)) + 'px';
+      });
+
+      $('#cameraBox').addEventListener('pointerup', () => moving = false);
+
+      $('#resize').onpointerdown = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const b = $('#cameraBox');
+        const sx = e.clientX;
+        const sy = e.clientY;
+        const sw = b.offsetWidth;
+        const sh = b.offsetHeight;
+
+        const move = (a) => {
+          b.style.width = Math.max(100, sw + a.clientX - sx) + 'px';
+          b.style.height = Math.max(70, sh + a.clientY - sy) + 'px';
+        };
+
+        const end = () => {
+          window.removeEventListener('pointermove', move);
+          window.removeEventListener('pointerup', end);
+        };
+
+        window.addEventListener('pointermove', move);
+        window.addEventListener('pointerup', end);
+      };
+
+      $('#openFile').onclick = () => $('#fileInput').click();
+
+      async function openPdfFile(file) {
+        try {
+          if (!window.pdfjsLib) {
+            toast('PDF support not loaded.');
+            return;
+          }
+
+          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+          const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+          const pdfPages = [];
+
+          for (let n = 1; n <= pdf.numPages; n++) {
+            const page = await pdf.getPage(n);
+            const rawViewport = page.getViewport({ scale: 1 });
+            const scale = Math.min(850 / rawViewport.width, 1200 / rawViewport.height);
+            const viewport = page.getViewport({ scale });
+
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = Math.ceil(viewport.width);
+            tempCanvas.height = Math.ceil(viewport.height);
+
+            await page.render({
+              canvasContext: tempCanvas.getContext('2d'),
+              viewport
+            }).promise;
+
+            const boardCanvas = document.createElement('canvas');
+            boardCanvas.width = 850;
+            boardCanvas.height = 1200;
+            const ctx = boardCanvas.getContext('2d');
+
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, 850, 1200);
+            ctx.drawImage(tempCanvas, (850 - tempCanvas.width) / 2, (1200 - tempCanvas.height) / 2);
+
+            pdfPages.push({
+              strokes: [],
+              paper: 'blank',
+              bg: '#fff',
+              rule: '#d8e1ee',
+              pdfImage: boardCanvas.toDataURL('image/png')
+            });
+          }
+
+          pages = pdfPages;
+          current = 0;
+          render();
+          toast(`PDF opened: ${pdfPages.length} page(s)`);
+        } catch (err) {
+          console.error(err);
+          toast('PDF open failed. Try again.');
+        }
+      }
+
+      $('#fileInput').onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+          await openPdfFile(file);
+          e.target.value = '';
+          return;
+        }
+
+        if (file.type.startsWith('image/')) {
+          const img = new Image();
+          img.onload = () => {
+            const c = pagesEl.querySelector(`canvas[data-page="${current}"]`);
+            if (!c) return;
+            const ctx = c.getContext('2d');
+            ctx.drawImage(img, 0, 0, c.width, c.height);
+            toast('Image added to page');
+          };
+          img.src = URL.createObjectURL(file);
+          e.target.value = '';
+          return;
+        }
+
+        if (file.type === 'text/plain' || file.name.endsWith('.txt') || file.name.endsWith('.md')) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            modal('Open text', '<textarea id="fileText"></textarea>', 'Add', () => {
+              const text = document.getElementById('fileText').value || String(reader.result || '');
+              const c = pagesEl.querySelector(`canvas[data-page="${current}"]`);
+              const ctx = c.getContext('2d');
+              ctx.fillStyle = ink;
+              ctx.font = '20px sans-serif';
+              ctx.fillText(text.slice(0, 200), 30, 80);
+            });
+            document.getElementById('fileText').value = String(reader.result || '');
+          };
+          reader.readAsText(file);
+          e.target.value = '';
+          return;
+        }
+
+        e.target.value = '';
+      };
+
+      function download(blob, name) {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = name;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      }
+
+      $('#files').onclick = () => {
+        modal(
+          'Board files',
+          `
+            <p>Save a portable copy of this board to your computer, or open a saved board JSON.</p>
+            <div class="row">
+              <button id="save">Download board JSON</button>
+              <button id="load">Open board JSON</button>
+              <input id="loadInput" type="file" accept="application/json" hidden>
+            </div>
+          `,
+          'Done'
+        );
+
+        const body = $('#modalBody');
+        body.addEventListener('click', (e) => {
+          if (e.target.id === 'save') {
+            const data = JSON.stringify({ pages });
+            download(new Blob([data], { type: 'application/json' }), 'teaching-board.json');
+          }
+          if (e.target.id === 'load') {
+            $('#loadInput').click();
+          }
+        });
+
+        body.addEventListener('change', (e) => {
+          if (e.target.id === 'loadInput') {
+            const reader = new FileReader();
+            reader.onload = () => {
+              try {
+                const parsed = JSON.parse(reader.result);
+                if (Array.isArray(parsed.pages)) {
+                  pages = parsed.pages;
+                  current = 0;
+                  render();
+                  $('#modal').classList.remove('open');
+                } else {
+                  toast('Invalid board file');
+                }
+              } catch {
+                toast('Invalid board file');
+              }
+            };
+            reader.readAsText(e.target.files[0]);
+          }
+        }, { once: true });
+      };
+
+      function compositeStream() {
+        const c = document.createElement('canvas');
+        c.width = 1280;
+        c.height = 720;
+        const ctx = c.getContext('2d');
+        let active = true;
+
+        function frame() {
+          if (!active) return;
+
+          ctx.fillStyle = '#111';
+          ctx.fillRect(0, 0, c.width, c.height);
+
+          const pageCanvas = pagesEl.querySelector(`canvas[data-page="${current}"]`);
+          if (pageCanvas) {
+            ctx.fillStyle = pages[current].bg;
+            ctx.fillRect(0, 0, c.width, c.height);
+
+            if (pages[current].paper !== 'blank') {
+              ctx.strokeStyle = pages[current].rule;
+              ctx.lineWidth = 1;
+              for (let y = 30; y < c.height; y += 30) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(c.width, y);
+                ctx.stroke();
+              }
+            }
+
+            ctx.drawImage(pageCanvas, 0, 0, c.width, c.height);
+          }
+
+          if (cameraStream && $('#cameraBox').classList.contains('on')) {
+            const box = $('#cameraBox');
+            const rect = box.getBoundingClientRect();
+            const scaleX = c.width / window.innerWidth;
+            const scaleY = c.height / window.innerHeight;
+
+            const bx = rect.left * scaleX;
+            const by = rect.top * scaleY;
+            const bw = rect.width * scaleX;
+            const bh = rect.height * scaleY;
+
+            ctx.save();
+
+            if (box.classList.contains('circle')) {
+              ctx.beginPath();
+              ctx.ellipse(bx + bw / 2, by + bh / 2, bw / 2, bh / 2, 0, 0, Math.PI * 2);
+              ctx.clip();
+            }
+
+            if (box.classList.contains('mirror')) {
+              ctx.translate(bx + bw, by);
+              ctx.scale(-1, 1);
+              ctx.drawImage($('#cameraVideo'), 0, 0, bw, bh);
+            } else {
+              ctx.drawImage($('#cameraVideo'), bx, by, bw, bh);
+            }
+
+            ctx.restore();
+          }
+
+          requestAnimationFrame(frame);
+        }
+
+        frame();
+
+        const out = c.captureStream(25);
+        return {
+          stream: out,
+          stop: () => {
+            active = false;
+            out.getTracks().forEach((t) => t.stop());
+          }
+        };
+      }
+
+      async function recordToggle() {
+        if (recording) {
+          recorder.stop();
+          return;
+        }
+
+        try {
+          const made = compositeStream();
+          const tracks = [...made.stream.getVideoTracks()];
+
+          if ($('#mic').value) {
+            const audioStream = await navigator.mediaDevices.getUserMedia({
+              audio: { deviceId: { exact: $('#mic').value } }
+            });
+            audioStream.getAudioTracks().forEach((t) => tracks.push(t));
+          }
+
+          const stream = new MediaStream(tracks);
+          recorder = new MediaRecorder(stream);
+          const chunks = [];
+
+          recorder.ondataavailable = (e) => {
+            if (e.data.size) chunks.push(e.data);
+          };
+
+          recorder.onstop = () => {
+            download(new Blob(chunks, { type: recorder.mimeType || 'video/webm' }), 'teaching-board-recording.webm');
+            made.stop();
+            stream.getAudioTracks().forEach((t) => t.stop());
+            recording = false;
+            $('#record').textContent = '🔴 Record Board';
+            $('#topRecord').textContent = '🔴 Record';
+            $('#status').textContent = '● Ready';
+            toast('Recording downloaded to your device');
+          };
+
+          recorder.start();
+          recording = true;
+          $('#record').textContent = '■ Stop Recording';
+          $('#topRecord').textContent = '■ Stop';
+          $('#status').textContent = '● Recording';
+        } catch (e) {
+          console.error(e);
+          toast('Recording requires camera/mic permissions and a supported browser');
+        }
+      }
+
+      $('#record').onclick = recordToggle;
+      $('#topRecord').onclick = recordToggle;
+      $('#fullMode').onclick = recordToggle;
+      $('#micTest').onclick = () => $('#testMic').click();
+
+      $('#testMic').onclick = async () => {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: $('#mic').value ? { deviceId: { exact: $('#mic').value } } : true
+          });
+          $('#status').textContent = '● Mic test active';
+          setTimeout(() => {
+            stream.getTracks().forEach((t) => t.stop());
+            $('#status').textContent = '● Ready';
+          }, 4000);
+        } catch {
+          toast('Select a microphone and allow browser permission');
+        }
+      };
+
+      async function scanMicDevices() {
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const audioInputs = devices.filter((d) => d.kind === 'audioinput');
+          $('#mic').innerHTML = '<option value="">Choose a microphone</option>' +
+            audioInputs.map((d, i) => `<option value="${d.deviceId}">${d.label || 'Microphone ' + (i + 1)}</option>`).join('');
+        } catch {
+          $('#mic').innerHTML = '<option value="">Choose a microphone</option>';
+        }
+      }
+
+      $('#rescan').onclick = scanMicDevices;
+      $('#mic').onchange = () => {
+        $('#micStatus').textContent = $('#mic').value
+          ? 'Selected: ' + $('#mic').selectedOptions[0].textContent
+          : 'Selected: No microphone selected';
+      };
+
+      scanMicDevices();
+
+      $('#students').onclick = () => {
+        modal(
+          'Students & phone camera',
+          `
+            <p><b>Phone camera over USB:</b> connect a UVC/webcam-enabled phone to the computer and allow it in browser camera permissions. USB file-transfer/MTP alone does not provide a live camera.</p>
+            <p><b>Phone camera over Wi‑Fi:</b> open an IP camera/WebRTC camera app on the phone and enter its reachable video URL. Both devices must be on the same network; browser-compatible WebRTC/HLS/MJPEG URLs work best.</p>
+            <input id="wifiUrl" placeholder="https://… or http://phone-ip:port/video">
+            <div class="row">
+              <button id="connectWifi">Connect Wi‑Fi camera</button>
+              <button id="chooseDevice">Choose USB / browser camera</button>
+            </div>
+          `,
+          'Done'
+        );
+      };
+
+      $('#modalBody').addEventListener('click', async (e) => {
+        if (e.target.id === 'connectWifi') {
+          const url = $('#wifiUrl').value;
+          try {
+            $('#cameraVideo').srcObject = null;
+            $('#cameraVideo').src = url;
+            await $('#cameraVideo').play();
+            $('#cameraBox').classList.add('on');
+            $('#camToggle').textContent = 'Hide Cam';
+            $('#modal').classList.remove('open');
+            toast('Wi‑Fi camera connected');
+          } catch {
+            toast('Could not play camera URL. Use a browser-supported stream URL.');
+          }
+        }
+
+        if (e.target.id === 'chooseDevice') {
+          const old = cameraStream;
+          try {
+            const s = await navigator.mediaDevices.getUserMedia({ video: true });
+            if (old) old.getTracks().forEach((t) => t.stop());
+            cameraStream = s;
+            $('#cameraVideo').srcObject = s;
+            $('#cameraBox').classList.add('on');
+            $('#modal').classList.remove('open');
+          } catch {
+            toast('No available USB/browser camera');
+          }
+        }
+      });
+
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, (c) => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        }[c]));
+      }
+
+      function chatLine(text) {
+        const box = $('#chatLog');
+        box.innerHTML += `<div>${escapeHtml(text)}</div>`;
+        box.scrollTop = box.scrollHeight;
+      }
+
+      function sendToAll(msg) {
+        connections.forEach((conn) => {
+          if (conn && conn.open) conn.send(msg);
+        });
+      }
+
+      function receive(conn) {
+        connections.push(conn);
+
+        conn.on('open', () => {
+          conn.send({ type: 'welcome', teacher: peer ? peer.id : null, permissions: true });
+          sendToAll({ type: 'roster', count: connections.length });
+        });
+
+        conn.on('data', async (m) => {
+          if (!m) return;
+
+          if (m.type === 'chat') {
+            chatLine('Student: ' + m.text);
+            sendToAll({ type: 'chat', text: m.text, from: 'Student' });
+          }
+
+          if (m.type === 'hand') {
+            chatLine('✋ Student raised a hand');
+            toast('A student raised their hand');
+          }
+
+          if (m.type === 'mic-request') {
+            chatLine('🎙 Student requested microphone permission');
+            modal('Allow student microphone?', '<p>Allow this student to send live audio to the teacher?</p>', 'Allow', () => {
+              conn.send({ type: 'mic-allowed' });
+              toast('Microphone permission allowed');
+            });
+            $('#modalClose').onclick = () => conn.send({ type: 'mic-denied' });
+          }
+
+          if (m.type === 'board-sync') {
+            // board sync can be extended later
+          }
+        });
+
+        conn.on('close', () => {
+          connections = connections.filter((c) => c !== conn);
+          sendToAll({ type: 'roster', count: connections.length });
+        });
+      }
+
+      function broadcastBoard() {
+        if (!liveStream) return;
+        sendToAll({ type: 'board-update', pages, current });
+      }
+
+      function loadPeer() {
+        return new Promise((resolve, reject) => {
+          if (window.Peer) return resolve();
+          const script = document.createElement('script');
+          script.src = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
+          script.onload = resolve;
+          script.onerror = reject;
+          document.head.appendChild(script);
+        });
+      }
+
+      function startLive() {
+        loadPeer().then(() => {
+          peer = new Peer();
+          peer.on('open', (id) => {
+            roomId = id;
+            const link = location.href.split('?')[0] + '?join=' + encodeURIComponent(id);
+
+            modal(
+              'Live class is ready',
+              `
+                <p>Send this join link to students. Students need a modern browser and camera/microphone permissions only if they ask to speak.</p>
+                <input id="shareLink" value="${link}" readonly>
+                <div class="row">
+                  <button id="copyLink">Copy student link</button>
+                  <label style="display:flex;align-items:center;gap:5px">
+                    <input id="allowMic" type="checkbox" checked>Allow students to request mic
+                  </label>
+                </div>
+                <p>Connected students: <span id="studentCount">0</span></p>
+              `,
+              'Close'
+            );
+
+            $('#modalBody').addEventListener('click', (e) => {
+              if (e.target.id === 'copyLink') {
+                navigator.clipboard?.writeText(link);
+                toast('Student link copied');
+              }
+            });
+
+            liveStream = compositeStream().stream;
+            peer.on('connection', receive);
+
+            peer.on('call', (call) => {
+              call.answer();
+              call.on('stream', (s) => {
+                teacherMicAudio = new Audio();
+                teacherMicAudio.srcObject = s;
+                teacherMicAudio.play().catch(() => {});
+                chatLine('Student microphone connected');
+              });
+            });
+
+            $('#live').textContent = 'End Live';
+            toast('Live class started');
+          });
+        }).catch(() => {
+          toast('Live needs an internet connection to PeerJS signaling');
+        });
+      }
+
+      $('#live').onclick = () => {
+        if (liveStream) {
+          liveStream.getTracks().forEach((t) => t.stop());
+          peer && peer.destroy();
+          peer = null;
+          liveStream = null;
+          connections = [];
+          $('#live').textContent = 'Go Live';
+          toast('Live class ended');
+        } else {
+          startLive();
+        }
+      };
+
+      function startStudent(id) {
+        loadPeer().then(() => {
+          studentPeer = new Peer();
+
+          studentPeer.on('open', (sid) => {
+            teacherConn = studentPeer.connect(id);
+
+            teacherConn.on('open', () => {
+              teacherConn.send({ type: 'join', id: sid });
+              $('#studentScreen').classList.add('open');
+              $('#chat').classList.add('open');
+            });
+
+            teacherConn.on('data', async (m) => {
+              if (!m) return;
+
+              if (m.type === 'mic-allowed') {
+                try {
+                  studentMic = await navigator.mediaDevices.getUserMedia({ audio: true });
+                  studentPeer.call(id, studentMic);
+                } catch {
+                  toast('Microphone permission denied');
+                }
+              }
+
+              if (m.type === 'mic-denied') {
+                toast('Teacher declined mic request');
+              }
+
+              if (m.type === 'chat') {
+                chatLine('Teacher: ' + m.text);
+              }
+
+              if (m.type === 'welcome' && m.permissions) {
+                $('#askMic').disabled = false;
+              }
+
+              if (m.type === 'board-update') {
+                // optional board sync
+              }
+            });
+          });
+
+          studentPeer.on('call', (call) => {
+            call.answer();
+            call.on('stream', (s) => {
+              $('#studentVideo').srcObject = s;
+              $('#studentVideo').muted = false;
+            });
+          });
+
+          studentPeer.on('error', () => {
+            toast('Could not connect. Ask teacher for a fresh link.');
+          });
+        });
+      }
+
+      if (new URLSearchParams(location.search).has('join')) {
+        const id = new URLSearchParams(location.search).get('join');
+        setTimeout(() => startStudent(id), 300);
+      }
+
+      $('#raise').onclick = () => {
+        if (teacherConn) teacherConn.send({ type: 'hand' });
+        toast('Hand raised');
+      };
+
+      $('#askMic').onclick = () => {
+        if (teacherConn) teacherConn.send({ type: 'mic-request' });
+        toast('Asked teacher for mic permission');
+      };
+
+      $('#studentChat').onclick = () => {
+        $('#chat').classList.toggle('open');
+        $('#chatTitle').textContent = 'Class chat';
+      };
+
+      $('#leave').onclick = () => {
+        if (teacherConn) teacherConn.close();
+        if (studentPeer) studentPeer.destroy();
+        if (studentMic) studentMic.getTracks().forEach((t) => t.stop());
+        $('#studentScreen').classList.remove('open');
+        toast('You left the class');
+      };
+
+      $('#sendChat').onclick = () => {
+        const text = $('#chatInput').value.trim();
+        if (!text) return;
+
+        if (teacherConn) {
+          teacherConn.send({ type: 'chat', text });
+        } else {
+          sendToAll({ type: 'chat', text });
+        }
+
+        chatLine('You: ' + text);
+        $('#chatInput').value = '';
+      };
+
+      $('#chatInput').onkeydown = (e) => {
+        if (e.key === 'Enter') $('#sendChat').click();
+      };
+
+      $('#dpp').onclick = () => {
+        modal('DPP', '<p>Daily Practice Problems — draft a question for students.</p><textarea id="dppText" placeholder="Write a problem…"></textarea>', 'Share', () => {
+          const text = $('#dppText')?.value;
+          if (text) sendToAll({ type: 'chat', text: 'DPP: ' + text });
+        });
+      };
+
+      setInterval(() => {
+        const now = Date.now();
+        let changed = false;
+
+        pages.forEach((page, idx) => {
+          const filtered = page.strokes.filter((s) => s.tool !== 'Laser Pointer' || s.expiresAt > now);
+          if (filtered.length !== page.strokes.length) {
+            page.strokes = filtered;
+            changed = true;
+            draw(idx);
+          }
+        });
+
+        if (changed) {
+          broadcastBoard();
+        }
+      }, 100);
+
+      render();
+    })();
+  </script>
+</body>
+</html>
