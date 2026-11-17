@@ -420,6 +420,9 @@
       const PAGE_W = 1700;
       const PAGE_H = 2400;
       const PDF_CACHE_LIMIT = 2;
+      const RECORD_CAPTURE_WIDTH = 1280;
+      const RECORD_CAPTURE_HEIGHT = 720;
+      const RECORD_FPS = 18;
 
       const colors = [
         '#111827','#4b5563','#fff','#ef4444','#3b82f6','#22c55e',
@@ -509,7 +512,6 @@
             if (pdfCanvas && (page.pdfKey || page.pdfImage)) {
               try { copy.pdfImage = pdfCanvas.toDataURL('image/jpeg', 0.86); } catch (_) {}
             }
-            // A restored PDF page uses its saved image, not the temporary PDF.js document key.
             if (copy.pdfImage) { copy.pdfKey = null; copy.pdfPage = null; }
             return copy;
           });
@@ -593,9 +595,7 @@
       const pagesEl = $('#pages');
 
       function getPdfRenderRatio() {
-        // Keep PDF backing canvases modest; CSS zoom still enlarges the page.
-        // This avoids allocating several very large canvases on ordinary laptops.
-        return Math.min(2, Math.max(1, (zoom / 100) * (window.devicePixelRatio || 1) * 1.1));
+        return Math.min(1.4, Math.max(1, (zoom / 100) * (window.devicePixelRatio || 1) * 0.9));
       }
 
       function rememberPdfRender(key, canvas) {
@@ -614,6 +614,7 @@
           let image = pdfImageCache.get(page.pdfImage);
           if (!image) {
             image = new Image();
+            image.decoding = 'async';
             pdfImageCache.set(page.pdfImage, image);
             image.onload = () => {
               if (!canvas.isConnected) return;
@@ -679,8 +680,8 @@
           canvas.width = output.width;
           canvas.height = output.height;
           canvas.getContext('2d').drawImage(output, 0, 0);
-          if (pages[pageIndex]) {
-            try { pages[pageIndex].pdfImage = canvas.toDataURL('image/jpeg', 0.86); } catch (_) {}
+          if (pages[pageIndex] && !recording) {
+            try { pages[pageIndex].pdfImage = canvas.toDataURL('image/jpeg', 0.72); } catch (_) {}
             scheduleSave();
           }
         } catch (error) {
@@ -689,8 +690,6 @@
       }
 
       function render() {
-        // One shared zoom level is applied to EVERY page, not only the active page.
-        // Keep the current scroll position when the board is rebuilt after zoom/page changes.
         const stage = $('#stage');
         const oldScrollTop = stage.scrollTop;
         const oldScrollLeft = stage.scrollLeft;
@@ -706,7 +705,6 @@
         pages.forEach((page, index) => {
           const wrap = document.createElement('div');
           wrap.className = 'sheet-wrap';
-          // All pages use exactly the same dimensions at the selected zoom.
           wrap.style.width = `${sharedPageWidth}px`;
           wrap.style.minWidth = `${sharedPageWidth}px`;
           wrap.style.height = `${sharedPageHeight}px`;
@@ -758,7 +756,6 @@
 
         $('#pageLabel').textContent = `Page ${current + 1} / ${pages.length}`;
         $('#paper').value = pages[current].paper;
-        // Restore scroll so the user can continue through the enlarged page stack.
         requestAnimationFrame(() => {
           stage.scrollTop = oldScrollTop;
           stage.scrollLeft = oldScrollLeft;
@@ -787,134 +784,127 @@
       }
 
       function draw(i) {
-  const canvas = pagesEl.querySelector(`canvas[data-page="${i}"]`);
-  if (!canvas || !pages[i]) return;
+        const canvas = pagesEl.querySelector(`canvas[data-page="${i}"]`);
+        if (!canvas || !pages[i]) return;
 
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
 
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  for (const stroke of pages[i].strokes || []) {
-    const points = stroke.points;
-    if (!Array.isArray(points) || points.length === 0) continue;
+        for (const stroke of pages[i].strokes || []) {
+          const points = stroke.points;
+          if (!Array.isArray(points) || points.length === 0) continue;
 
-    const isLaser = stroke.tool === 'Laser Pointer';
-    const remaining = isLaser
-      ? Math.max(0, ((stroke.expiresAt || 0) - Date.now()) / (laserDuration * 1000))
-      : 1;
+          const isLaser = stroke.tool === 'Laser Pointer';
+          const remaining = isLaser ? Math.max(0, ((stroke.expiresAt || 0) - Date.now()) / (laserDuration * 1000)) : 1;
+          if (isLaser && remaining <= 0) continue;
 
-    if (isLaser && remaining <= 0) continue;
+          ctx.save();
+          ctx.globalCompositeOperation = stroke.tool === 'Eraser' ? 'destination-out' : 'source-over';
+          ctx.strokeStyle = stroke.color || ink;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          ctx.globalAlpha = 1;
+          ctx.shadowBlur = 0;
+          ctx.setLineDash([]);
 
-    ctx.save();
-    ctx.globalCompositeOperation =
-      stroke.tool === 'Eraser' ? 'destination-out' : 'source-over';
-    ctx.strokeStyle = stroke.color || ink;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.globalAlpha = 1;
-    ctx.shadowBlur = 0;
+          const width = Number(stroke.width) || 3;
 
-    // setLineDash requires an array; calling it with no argument can throw.
-    ctx.setLineDash([]);
+          switch (stroke.tool) {
+            case 'Laser Pointer':
+              ctx.lineWidth = width * 1.5;
+              ctx.globalAlpha = 0.9 * remaining;
+              ctx.shadowColor = stroke.color || ink;
+              ctx.shadowBlur = 18;
+              break;
+            case 'Soft Brush':
+              ctx.lineWidth = width * 2.5;
+              ctx.globalAlpha = 0.28;
+              ctx.shadowColor = stroke.color || ink;
+              ctx.shadowBlur = Math.max(3, width * 1.5);
+              break;
+            case 'Ink Flow':
+              ctx.lineWidth = width * 1.25;
+              ctx.globalAlpha = 0.92;
+              break;
+            case 'Neon Glow':
+              ctx.lineWidth = width;
+              ctx.shadowColor = stroke.color || ink;
+              ctx.shadowBlur = 14;
+              ctx.globalAlpha = 0.95;
+              break;
+            case 'Writing Marker':
+              ctx.lineWidth = width * 2.4;
+              ctx.globalAlpha = 0.55;
+              break;
+            case 'Soft Marker':
+              ctx.lineWidth = width * 2.1;
+              ctx.globalAlpha = 0.45;
+              ctx.shadowColor = stroke.color || ink;
+              ctx.shadowBlur = 2;
+              break;
+            case 'Gel Pen':
+              ctx.lineWidth = width * 1.1;
+              ctx.globalAlpha = 0.9;
+              ctx.shadowColor = stroke.color || ink;
+              ctx.shadowBlur = 1.5;
+              break;
+            case 'Sketch Pen':
+              ctx.lineWidth = Math.max(1, width * 0.75);
+              ctx.globalAlpha = 0.76;
+              ctx.setLineDash([1.2, 1.1]);
+              break;
+            case 'Fountain Pen':
+              ctx.lineWidth = width * 1.4;
+              ctx.lineCap = 'square';
+              break;
+            case 'Calligraphy':
+              ctx.lineWidth = width * 1.8;
+              ctx.lineCap = 'square';
+              ctx.globalAlpha = 0.95;
+              break;
+            case 'Eraser':
+              ctx.lineWidth = Math.max(8, width);
+              break;
+            default:
+              ctx.lineWidth = width;
+          }
 
-    const width = Number(stroke.width) || 3;
+          if (['Auto Smooth', 'Ink Flow', 'Soft Brush', 'Gel Pen'].includes(stroke.tool)) {
+            drawSmoothPath(ctx, points);
+          } else {
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, points[0].y);
+            for (let n = 1; n < points.length; n++) {
+              ctx.lineTo(points[n].x, points[n].y);
+            }
+          }
 
-    switch (stroke.tool) {
-      case 'Laser Pointer':
-        ctx.lineWidth = width * 1.5;
-        ctx.globalAlpha = 0.9 * remaining;
-        ctx.shadowColor = stroke.color || ink;
-        ctx.shadowBlur = 18;
-        break;
-      case 'Soft Brush':
-        ctx.lineWidth = width * 2.5;
-        ctx.globalAlpha = 0.28;
-        ctx.shadowColor = stroke.color || ink;
-        ctx.shadowBlur = Math.max(3, width * 1.5);
-        break;
-      case 'Ink Flow':
-        ctx.lineWidth = width * 1.25;
-        ctx.globalAlpha = 0.92;
-        break;
-      case 'Neon Glow':
-        ctx.lineWidth = width;
-        ctx.shadowColor = stroke.color || ink;
-        ctx.shadowBlur = 14;
-        ctx.globalAlpha = 0.95;
-        break;
-      case 'Writing Marker':
-        ctx.lineWidth = width * 2.4;
-        ctx.globalAlpha = 0.55;
-        break;
-      case 'Soft Marker':
-        ctx.lineWidth = width * 2.1;
-        ctx.globalAlpha = 0.45;
-        ctx.shadowColor = stroke.color || ink;
-        ctx.shadowBlur = 2;
-        break;
-      case 'Gel Pen':
-        ctx.lineWidth = width * 1.1;
-        ctx.globalAlpha = 0.9;
-        ctx.shadowColor = stroke.color || ink;
-        ctx.shadowBlur = 1.5;
-        break;
-      case 'Sketch Pen':
-        ctx.lineWidth = Math.max(1, width * 0.75);
-        ctx.globalAlpha = 0.76;
-        ctx.setLineDash([1.2, 1.1]);
-        break;
-      case 'Fountain Pen':
-        ctx.lineWidth = width * 1.4;
-        ctx.lineCap = 'square';
-        break;
-      case 'Calligraphy':
-        ctx.lineWidth = width * 1.8;
-        ctx.lineCap = 'square';
-        ctx.globalAlpha = 0.95;
-        break;
-      case 'Eraser':
-        ctx.lineWidth = Math.max(8, width);
-        break;
-      default:
-        ctx.lineWidth = width;
-    }
+          if (points.length === 1) {
+            ctx.beginPath();
+            ctx.arc(points[0].x, points[0].y, Math.max(0.5, ctx.lineWidth / 2), 0, Math.PI * 2);
+          }
 
-    if (['Auto Smooth', 'Ink Flow', 'Soft Brush', 'Gel Pen'].includes(stroke.tool)) {
-      drawSmoothPath(ctx, points);
-    } else {
-      ctx.beginPath();
-      ctx.moveTo(points[0].x, points[0].y);
-      for (let n = 1; n < points.length; n++) {
-        ctx.lineTo(points[n].x, points[n].y);
+          ctx.stroke();
+          ctx.restore();
+        }
       }
-    }
 
-    // Make taps/dots visible as well as dragged strokes.
-    if (points.length === 1) {
-      ctx.beginPath();
-      ctx.arc(points[0].x, points[0].y, Math.max(0.5, ctx.lineWidth / 2), 0, Math.PI * 2);
-    }
+      const pendingDraws = new Set();
 
-    ctx.stroke();
-    ctx.restore();
-  }
-}
+      function queueDraw(pageIndex) {
+        pendingDraws.add(pageIndex);
+        if (drawFrame) return;
 
-const pendingDraws = new Set();
+        drawFrame = requestAnimationFrame(() => {
+          drawFrame = 0;
+          for (const index of pendingDraws) draw(index);
+          pendingDraws.clear();
+        });
+      }
 
-function queueDraw(pageIndex) {
-  pendingDraws.add(pageIndex);
-  if (drawFrame) return;
-
-  drawFrame = requestAnimationFrame(() => {
-    drawFrame = 0;
-    for (const index of pendingDraws) draw(index);
-    pendingDraws.clear();
-  });
-} 
-      
       function attach(canvas) {
         let stroke = null;
         const pageIndex = Number(canvas.dataset.page);
@@ -961,7 +951,6 @@ function queueDraw(pageIndex) {
           scheduleSave();
         };
 
-        // Pointer events cover mouse, pen tablets and touch screens.
         canvas.addEventListener('pointerdown', startStroke, { passive: false });
         canvas.addEventListener('pointermove', moveStroke, { passive: false });
         canvas.addEventListener('pointerup', finishStroke, { passive: false });
@@ -1390,11 +1379,9 @@ function queueDraw(pageIndex) {
       };
 
       function compositeStream() {
-        // Record the visible teaching-board viewport, not a fixed fitted page.
-        // PDF/page zoom, scrolling and page positioning therefore appear in the video.
         const canvas = document.createElement('canvas');
-        canvas.width = 1600;
-        canvas.height = 900;
+        canvas.width = RECORD_CAPTURE_WIDTH;
+        canvas.height = RECORD_CAPTURE_HEIGHT;
 
         const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
         ctx.imageSmoothingEnabled = true;
@@ -1413,8 +1400,6 @@ function queueDraw(pageIndex) {
           ctx.fillStyle = '#0d0e11';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                   // Draw every page that is visible in the stage viewport.
-          // Scrolling then naturally brings the next page and its writing into the recording.
           const stageBounds = {
             left: stageRect.left,
             top: stageRect.top,
@@ -1424,8 +1409,6 @@ function queueDraw(pageIndex) {
 
           pagesEl.querySelectorAll('.sheet').forEach((sheet, pageIndex) => {
             const rect = sheet.getBoundingClientRect();
-
-            // Skip pages that are fully outside the visible stage.
             if (
               rect.bottom <= stageBounds.top ||
               rect.top >= stageBounds.bottom ||
@@ -1448,9 +1431,7 @@ function queueDraw(pageIndex) {
             if (pdfCanvas) ctx.drawImage(pdfCanvas, x, y, w, h);
             if (inkCanvas) ctx.drawImage(inkCanvas, x, y, w, h);
           });
-          ctx.restore(); 
 
-          // Camera stays at the same screen position and size as the teacher sees.
           const video = $('#cameraVideo');
           const cameraVisible = $('#cameraBox').classList.contains('on');
           if (cameraVisible && video.readyState >= 2) {
@@ -1482,7 +1463,7 @@ function queueDraw(pageIndex) {
 
         frame();
 
-        const stream = canvas.captureStream(24);
+        const stream = canvas.captureStream(RECORD_FPS);
         return {
           stream,
           stop: () => {
@@ -1866,7 +1847,6 @@ function queueDraw(pageIndex) {
               }
 
               if (message.type === 'board-update') {
-                // Board video is shared through the live video stream.
               }
             });
           });
@@ -1962,4 +1942,3 @@ function queueDraw(pageIndex) {
   </script>
 </body>
 </html>
-                                      
