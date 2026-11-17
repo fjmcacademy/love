@@ -1413,37 +1413,42 @@ function queueDraw(pageIndex) {
           ctx.fillStyle = '#0d0e11';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-          // Clip the page to the same visible stage area seen on screen.
-          ctx.save();
-          ctx.beginPath();
-          ctx.rect(
-            stageRect.left * sx,
-            stageRect.top * sy,
-            stageRect.width * sx,
-            stageRect.height * sy
-          );
-          ctx.clip();
+                   // Draw every page that is visible in the stage viewport.
+          // Scrolling then naturally brings the next page and its writing into the recording.
+          const stageBounds = {
+            left: stageRect.left,
+            top: stageRect.top,
+            right: stageRect.right,
+            bottom: stageRect.bottom
+          };
 
-          const pageWrap = pagesEl.children[current];
-          if (pageWrap) {
-            const sheet = pageWrap.querySelector('.sheet');
-            const pdfCanvas = pageWrap.querySelector('canvas[data-pdf-page]');
-            const inkCanvas = pageWrap.querySelector('canvas[data-page]');
-            if (sheet) {
-              const rect = sheet.getBoundingClientRect();
-              const x = rect.left * sx;
-              const y = rect.top * sy;
-              const w = rect.width * sx;
-              const h = rect.height * sy;
+          pagesEl.querySelectorAll('.sheet').forEach((sheet, pageIndex) => {
+            const rect = sheet.getBoundingClientRect();
 
-              ctx.fillStyle = pages[current]?.bg || '#fff';
-              ctx.fillRect(x, y, w, h);
+            // Skip pages that are fully outside the visible stage.
+            if (
+              rect.bottom <= stageBounds.top ||
+              rect.top >= stageBounds.bottom ||
+              rect.right <= stageBounds.left ||
+              rect.left >= stageBounds.right
+            ) return;
 
-              if (pdfCanvas) ctx.drawImage(pdfCanvas, x, y, w, h);
-              if (inkCanvas) ctx.drawImage(inkCanvas, x, y, w, h);
-            }
-          }
-          ctx.restore();
+            const x = rect.left * sx;
+            const y = rect.top * sy;
+            const w = rect.width * sx;
+            const h = rect.height * sy;
+
+            ctx.fillStyle = pages[pageIndex]?.bg || '#fff';
+            ctx.fillRect(x, y, w, h);
+
+            const pageWrap = pagesEl.children[pageIndex];
+            const pdfCanvas = pageWrap?.querySelector('canvas[data-pdf-page]');
+            const inkCanvas = pageWrap?.querySelector('canvas[data-page]');
+
+            if (pdfCanvas) ctx.drawImage(pdfCanvas, x, y, w, h);
+            if (inkCanvas) ctx.drawImage(inkCanvas, x, y, w, h);
+          });
+          ctx.restore(); 
 
           // Camera stays at the same screen position and size as the teacher sees.
           const video = $('#cameraVideo');
