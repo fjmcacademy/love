@@ -1399,9 +1399,21 @@ function queueDraw(pageIndex) {
         const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
-        let active = true;
+                let active = true;
         let animationId = 0;
+        let lastFrameTime = 0;
+        const frameInterval = 1000 / 24;
 
+        function frame(timestamp = performance.now()) {
+          if (!active) return;
+
+          if (timestamp - lastFrameTime < frameInterval) {
+            animationId = requestAnimationFrame(frame);
+            return;
+          }
+          lastFrameTime = timestamp;
+
+          const sx = canvas.width / Math.max(1, window.innerWidth);
         function frame() {
           if (!active) return;
 
