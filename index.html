@@ -561,12 +561,12 @@
         }
       }
 
-      function newPage() {
+      function newPage(paperType = 'lined') {
         return {
           strokes: [],
-          paper: 'lined',
+          paper: paperType,
           bg: '#fff',
-          rule: '#d8e1ee',
+          rule: paperType === 'blank' ? '#ffffff' : '#d8e1ee',
           pdfImage: null,
           pdfKey: null,
           pdfPage: null
@@ -1001,83 +1001,75 @@
           };
           pages[pageIndex].strokes.push(stroke);
           draw(pageIndex);
+          scheduleSave();
         };
 
         const moveStroke = (event) => {
+          if (!stroke || locked || cursor) return;
+          event.preventDefault();
+          const point = pointFromEvent(event);
+          stroke.points.push(point);
+          if (tool === 'Laser Pointer') {
+            if (Date.now() > (stroke.expiresAt || 0)) {
+              stroke.expiresAt = Date.now() + laserDuration * 1000;
+            }
+          }
+          draw(pageIndex);
+        };
+
+        const endStroke = (event) => {
           if (!stroke) return;
           event.preventDefault();
-          stroke.points.push(pointFromEvent(event));
-          if (stroke.tool === 'Laser Pointer') stroke.expiresAt = Date.now() + laserDuration * 1000;
-          queueDraw(pageIndex);
-        };
-
-        const finishStroke = (event) => {
-          if (!stroke) return;
-          if (event) event.preventDefault();
           stroke = null;
-          draw(pageIndex);
+          queueDraw(pageIndex);
           scheduleSave();
         };
 
-        canvas.addEventListener('pointerdown', startStroke, { passive: false });
-        canvas.addEventListener('pointermove', moveStroke, { passive: false });
-        canvas.addEventListener('pointerup', finishStroke, { passive: false });
-        canvas.addEventListener('pointercancel', finishStroke, { passive: false });
-        canvas.addEventListener('lostpointercapture', finishStroke);
-        canvas.addEventListener('contextmenu', event => event.preventDefault());
+        canvas.addEventListener('pointerdown', startStroke);
+        canvas.addEventListener('pointermove', moveStroke);
+        canvas.addEventListener('pointerup', endStroke);
+        canvas.addEventListener('pointerleave', endStroke);
+        canvas.addEventListener('pointercancel', endStroke);
       }
 
-      function setInk(color) {
-        ink = color;
-        $('#hex').textContent = color.toUpperCase();
-        document.querySelectorAll('.swatch').forEach((button) => {
-          button.classList.toggle('sel', button.dataset.c === color);
-        });
+      function setInk(value) {
+        ink = value;
+        $('#hex').textContent = value;
+        $('#customInk').value = value;
       }
 
-      function buildSwatches(element) {
-        colors.forEach((color) => {
+      function buildThemeButtons() {
+        const themes = $('#themes');
+        themeDefs.forEach(([name, bg, rule, paper]) => {
           const button = document.createElement('button');
-          button.className = 'swatch';
-          button.style.background = color;
-          button.dataset.c = color;
-          button.onclick = () => setInk(color);
-          element.appendChild(button);
+          button.textContent = name;
+          button.onclick = () => {
+            pages[current].bg = bg;
+            pages[current].rule = rule;
+            pages[current].paper = paper;
+            $('#paper').value = paper;
+            render();
+            scheduleSave();
+          };
+          themes.appendChild(button);
         });
       }
 
-      buildSwatches($('#colors'));
-      buildSwatches($('#topColors'));
-      setInk(ink);
-
-      themeDefs.forEach(([name, bg, rule, paper], index) => {
-        const button = document.createElement('button');
-        button.textContent = name;
-        button.className = index === 0 ? 'active' : '';
-        button.onclick = () => {
-          pages[current].bg = bg;
-          pages[current].rule = rule;
-          pages[current].paper = paper;
-          render();
-          scheduleSave();
-          $('#themes').querySelectorAll('button').forEach((item) => item.classList.remove('active'));
-          button.classList.add('active');
-        };
-        $('#themes').appendChild(button);
-      });
-
-      toolDefs.forEach(([name, description, color]) => {
-        const button = document.createElement('button');
-        button.className = 'tool' + (name === tool ? ' sel' : '');
-        button.style.setProperty('--c', color);
-        button.innerHTML = `${name}<small>${description}</small>`;
-        button.onclick = () => {
-          tool = name;
-          $('#tools').querySelectorAll('button').forEach((item) => item.classList.remove('sel'));
-          button.classList.add('sel');
-        };
-        $('#tools').appendChild(button);
-      });
+      function buildToolButtons() {
+        const tools = $('#tools');
+        toolDefs.forEach(([name, description, color]) => {
+          const button = document.createElement('button');
+          button.className = 'tool';
+          button.style.setProperty('--c', color);
+          button.innerHTML = `${name}<small>${description}</small>`;
+          button.onclick = () => {
+            tool = name;
+            $('#tools').querySelectorAll('button').forEach((item) => item.classList.remove('sel'));
+            button.classList.add('sel');
+          };
+          $('#tools').appendChild(button);
+        });
+      }
 
       $('#customInk').oninput = (event) => setInk(event.target.value);
 
@@ -1127,7 +1119,8 @@
       };
 
       $('#newPage').onclick = () => {
-        pages.push(newPage());
+        const selectedPaper = $('#paper').value || 'lined';
+        pages.push(newPage(selectedPaper));
         current = pages.length - 1;
         render();
         scheduleSave();
@@ -1184,828 +1177,20 @@
         $('#cursor').innerHTML = cursor
           ? '⌖ Cursor On <span style="float:right;color:#2c6">●</span>'
           : '⌖ Cursor Off <span style="float:right;color:#f66">●</span>';
-        toast(cursor ? 'Cursor mode' : 'Drawing mode');
       };
-
-      $('#sidebarToggle').onclick = () => {
-        document.body.classList.toggle('sidebar-hidden');
-      };
-
-      $('#toolbarToggle').onclick = () => {
-        document.body.classList.toggle('toolbar-hidden');
-      };
-
-      $('#full').onclick = () => {
-        if (document.fullscreenElement) document.exitFullscreen();
-        else document.documentElement.requestFullscreen?.();
-      };
-
-      $('#comfort').onclick = () => document.body.classList.toggle('comfort');
-      $('#export').onclick = () => window.print();
-
-      function startCam() {
-        navigator.mediaDevices.getUserMedia({
-          video: {
-            width: { ideal: 1920 },
-            height: { ideal: 1080 },
-            frameRate: { ideal: 30 }
-          },
-          audio: false
-        }).then((stream) => {
-          cameraStream = stream;
-          $('#cameraVideo').srcObject = stream;
-          $('#cameraVideo').src = '';
-          $('#cameraBox').classList.add('on');
-          $('#camToggle').textContent = 'Hide Cam';
-        }).catch(() => {
-          toast('Camera permission denied or camera unavailable');
-        });
-      }
-
-      function stopCamera() {
-        if (cameraStream) {
-          cameraStream.getTracks().forEach((track) => track.stop());
-          cameraStream = null;
-        }
-        $('#cameraVideo').srcObject = null;
-        $('#cameraVideo').src = '';
-        $('#cameraBox').classList.remove('on');
-        $('#camToggle').textContent = 'Show Cam';
-      }
-
-      $('#camToggle').onclick = () => {
-        if ($('#cameraBox').classList.contains('on')) stopCamera();
-        else startCam();
-      };
-
-      $('#camClose').onclick = stopCamera;
-      $('#mirror').onclick = () => $('#cameraBox').classList.toggle('mirror');
-
-      $('#shape').onclick = () => {
-        camShape = (camShape + 1) % 3;
-        const box = $('#cameraBox');
-        box.classList.remove('circle', 'square', 'rect');
-        box.classList.add(['rect', 'circle', 'square'][camShape]);
-        $('#shape').textContent = ['▭', '●', '□'][camShape];
-      };
-
-      $('#camSize').onclick = () => {
-        const box = $('#cameraBox');
-        box.style.width = (box.offsetWidth + 45) + 'px';
-        box.style.height = (box.offsetHeight + 30) + 'px';
-      };
-
-      $('#camSmaller').onclick = () => {
-        const box = $('#cameraBox');
-        box.style.width = Math.max(100, box.offsetWidth - 45) + 'px';
-        box.style.height = Math.max(70, box.offsetHeight - 30) + 'px';
-      };
-
-      let moving = false;
-      let moveDX = 0;
-      let moveDY = 0;
-
-      $('#cameraBox').addEventListener('pointerdown', (event) => {
-        if (event.target.closest('button') || event.target.id === 'resize') return;
-        moving = true;
-        const rect = $('#cameraBox').getBoundingClientRect();
-        moveDX = event.clientX - rect.left;
-        moveDY = event.clientY - rect.top;
-        $('#cameraBox').setPointerCapture(event.pointerId);
-      });
-
-      $('#cameraBox').addEventListener('pointermove', (event) => {
-        if (!moving) return;
-        const box = $('#cameraBox');
-        box.style.left = Math.max(0, Math.min(innerWidth - 70, event.clientX - moveDX)) + 'px';
-        box.style.top = Math.max(0, Math.min(innerHeight - 50, event.clientY - moveDY)) + 'px';
-      });
-
-      $('#cameraBox').addEventListener('pointerup', () => moving = false);
-      $('#cameraBox').addEventListener('pointercancel', () => moving = false);
-
-      $('#resize').onpointerdown = (event) => {
-        event.stopPropagation();
-        event.preventDefault();
-
-        const box = $('#cameraBox');
-        const startX = event.clientX;
-        const startY = event.clientY;
-        const startW = box.offsetWidth;
-        const startH = box.offsetHeight;
-
-        const move = (pointerEvent) => {
-          box.style.width = Math.max(100, startW + pointerEvent.clientX - startX) + 'px';
-          box.style.height = Math.max(70, startH + pointerEvent.clientY - startY) + 'px';
-        };
-
-        const end = () => {
-          window.removeEventListener('pointermove', move);
-          window.removeEventListener('pointerup', end);
-        };
-
-        window.addEventListener('pointermove', move);
-        window.addEventListener('pointerup', end);
-      };
-
-      $('#openFile').onclick = () => $('#fileInput').click();
-
-      async function openPdfFile(file) {
-        try {
-          if (!window.pdfjsLib) {
-            toast('PDF support not loaded.');
-            return;
-          }
-
-          pdfjsLib.GlobalWorkerOptions.workerSrc =
-            'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-          const pdf = await pdfjsLib.getDocument({
-            data: await file.arrayBuffer()
-          }).promise;
-
-          const key = `pdf-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-          pdfDocs.set(key, pdf);
-
-          pages = Array.from({ length: pdf.numPages }, (_, index) => ({
-            ...newPage(),
-            paper: 'blank',
-            bg: '#fff',
-            pdfKey: key,
-            pdfPage: index + 1
-          }));
-
-          current = 0;
-          render();
-          scheduleSave();
-          toast(`PDF opened: ${pages.length} page(s)`);
-        } catch (error) {
-          console.error(error);
-          toast('PDF open failed. Try again.');
-        }
-      }
-
-      $('#fileInput').onchange = async (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const fileName = file.name.toLowerCase();
-
-        if (file.type === 'application/pdf' || fileName.endsWith('.pdf')) {
-          await openPdfFile(file);
-          event.target.value = '';
-          return;
-        }
-
-        if (file.type.startsWith('image/')) {
-          const image = new Image();
-          image.onload = () => {
-            const canvas = pagesEl.querySelector(`canvas[data-page="${current}"]`);
-            if (canvas) {
-              canvas.getContext('2d').drawImage(image, 0, 0, PAGE_W, PAGE_H);
-              scheduleSave();
-              toast('Image added to page');
-            }
-            URL.revokeObjectURL(image.src);
-          };
-          image.src = URL.createObjectURL(file);
-          event.target.value = '';
-          return;
-        }
-
-        if (file.type === 'text/plain' || fileName.endsWith('.txt') || fileName.endsWith('.md')) {
-          const text = await file.text();
-          modal('Open text', '<textarea id="fileText"></textarea>', 'Add', () => {
-            const canvas = pagesEl.querySelector(`canvas[data-page="${current}"]`);
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = ink;
-            ctx.font = '20px sans-serif';
-            ctx.fillText($('#fileText').value || text, 30, 80, PAGE_W - 60);
-          });
-          $('#fileText').value = text;
-        }
-
-        event.target.value = '';
-      };
-
-      function download(blob, name) {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = name;
-        link.click();
-        setTimeout(() => URL.revokeObjectURL(url), 2000);
-      }
-
-      $('#files').onclick = () => {
-        modal(
-          'Board files',
-          `
-            <p>Save a portable copy of this board to your computer, or open a saved board JSON.</p>
-            <div class="row">
-              <button id="save">Download board JSON</button>
-              <button id="load">Open board JSON</button>
-              <input id="loadInput" type="file" accept="application/json" hidden>
-            </div>
-          `,
-          'Done'
-        );
-
-        const body = $('#modalBody');
-
-        body.addEventListener('click', (event) => {
-          if (event.target.id === 'save') {
-            download(
-              new Blob([JSON.stringify({ pages })], { type: 'application/json' }),
-              'teaching-board.json'
-            );
-          }
-          if (event.target.id === 'load') $('#loadInput').click();
-        });
-
-        body.addEventListener('change', async (event) => {
-          if (event.target.id !== 'loadInput' || !event.target.files[0]) return;
-
-          try {
-            const parsed = JSON.parse(await event.target.files[0].text());
-            if (!Array.isArray(parsed.pages)) throw new Error('Invalid board');
-
-            pages = parsed.pages.map((page) => ({
-              ...newPage(),
-              ...page,
-              strokes: Array.isArray(page.strokes) ? page.strokes : []
-            }));
-            current = 0;
-            render();
-            scheduleSave();
-            $('#modal').classList.remove('open');
-          } catch {
-            toast('Invalid board file');
-          }
-        });
-      };
-
-      function compositeStream() {
-        const canvas = document.createElement('canvas');
-        canvas.width = RECORD_CAPTURE_WIDTH;
-        canvas.height = RECORD_CAPTURE_HEIGHT;
-
-        const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        let active = true;
-        let animationId = 0;
-
-        function frame() {
-          if (!active) return;
-
-          const sx = canvas.width / Math.max(1, window.innerWidth);
-          const sy = canvas.height / Math.max(1, window.innerHeight);
-          const stage = $('#stage');
-          const stageRect = stage.getBoundingClientRect();
-
-          ctx.fillStyle = '#0d0e11';
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-          const stageBounds = {
-            left: stageRect.left,
-            top: stageRect.top,
-            right: stageRect.right,
-            bottom: stageRect.bottom
-          };
-
-          pagesEl.querySelectorAll('.sheet').forEach((sheet, pageIndex) => {
-            const rect = sheet.getBoundingClientRect();
-            if (
-              rect.bottom <= stageBounds.top ||
-              rect.top >= stageBounds.bottom ||
-              rect.right <= stageBounds.left ||
-              rect.left >= stageBounds.right
-            ) return;
-
-            const x = rect.left * sx;
-            const y = rect.top * sy;
-            const w = rect.width * sx;
-            const h = rect.height * sy;
-
-            ctx.fillStyle = pages[pageIndex]?.bg || '#fff';
-            ctx.fillRect(x, y, w, h);
-
-            const pageWrap = pagesEl.children[pageIndex];
-            const pdfCanvas = pageWrap?.querySelector('canvas[data-pdf-page]');
-            const inkCanvas = pageWrap?.querySelector('canvas[data-page]');
-
-            if (pdfCanvas) ctx.drawImage(pdfCanvas, x, y, w, h);
-            if (inkCanvas) ctx.drawImage(inkCanvas, x, y, w, h);
-          });
-
-          const video = $('#cameraVideo');
-          const cameraVisible = $('#cameraBox').classList.contains('on');
-          if (cameraVisible && video.readyState >= 2) {
-            const box = $('#cameraBox');
-            const rect = box.getBoundingClientRect();
-            const bx = rect.left * sx;
-            const by = rect.top * sy;
-            const bw = rect.width * sx;
-            const bh = rect.height * sy;
-
-            ctx.save();
-            if (box.classList.contains('circle')) {
-              ctx.beginPath();
-              ctx.ellipse(bx + bw / 2, by + bh / 2, bw / 2, bh / 2, 0, 0, Math.PI * 2);
-              ctx.clip();
-            }
-            if (box.classList.contains('mirror')) {
-              ctx.translate(bx + bw, by);
-              ctx.scale(-1, 1);
-              ctx.drawImage(video, 0, 0, bw, bh);
-            } else {
-              ctx.drawImage(video, bx, by, bw, bh);
-            }
-            ctx.restore();
-          }
-
-          animationId = requestAnimationFrame(frame);
-        }
-
-        frame();
-
-        const stream = canvas.captureStream(RECORD_FPS);
-        return {
-          stream,
-          stop: () => {
-            active = false;
-            cancelAnimationFrame(animationId);
-            stream.getTracks().forEach((track) => track.stop());
-          }
-        };
-      }
-
-      async function recordToggle() {
-        if (recording) {
-          if (recorder && recorder.state !== 'inactive') recorder.stop();
-          return;
-        }
-
-        let made = null;
-        let stream = null;
-
-        try {
-          made = compositeStream();
-          const tracks = [...made.stream.getVideoTracks()];
-
-          if ($('#mic').value) {
-            const micStream = await navigator.mediaDevices.getUserMedia({
-              audio: { deviceId: { exact: $('#mic').value } }
-            });
-            micStream.getAudioTracks().forEach((track) => tracks.push(track));
-          }
-
-          stream = new MediaStream(tracks);
-
-          const options = {
-            videoBitsPerSecond: 4_500_000,
-            audioBitsPerSecond: 128_000
-          };
-
-          if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
-            options.mimeType = 'video/webm;codecs=vp9';
-          } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
-            options.mimeType = 'video/webm;codecs=vp8';
-          }
-
-          recorder = new MediaRecorder(stream, options);
-          const chunks = [];
-
-          recorder.ondataavailable = (event) => {
-            if (event.data.size) chunks.push(event.data);
-          };
-
-          recorder.onstop = () => {
-            download(
-              new Blob(chunks, { type: recorder.mimeType || 'video/webm' }),
-              'teaching-board-recording.webm'
-            );
-
-            made?.stop();
-            stream?.getAudioTracks().forEach((track) => track.stop());
-            recording = false;
-            $('#record').textContent = '🔴 Record Board';
-            $('#topRecord').textContent = '🔴 Record';
-            $('#status').textContent = '● Ready';
-            toast('Recording downloaded to your device');
-          };
-
-          recorder.start();
-          recording = true;
-          $('#record').textContent = '■ Stop Recording';
-          $('#topRecord').textContent = '■ Stop';
-          $('#status').textContent = '● Recording';
-        } catch (error) {
-          console.error(error);
-          made?.stop();
-          stream?.getTracks().forEach((track) => track.stop());
-          toast('Recording requires camera/mic permissions and a supported browser');
-        }
-      }
-
-      $('#record').onclick = recordToggle;
-      $('#topRecord').onclick = recordToggle;
-      $('#fullMode').onclick = recordToggle;
-      $('#micTest').onclick = () => $('#testMic').click();
-
-      $('#testMic').onclick = async () => {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            audio: $('#mic').value ? { deviceId: { exact: $('#mic').value } } : true
-          });
-          $('#status').textContent = '● Mic test active';
-          await scanMicDevices();
-
-          setTimeout(() => {
-            stream.getTracks().forEach((track) => track.stop());
-            $('#status').textContent = recording ? '● Recording' : '● Ready';
-          }, 4000);
-        } catch {
-          toast('Select a microphone and allow browser permission');
-        }
-      };
-
-      async function scanMicDevices() {
-        try {
-          const selected = $('#mic').value;
-          const devices = await navigator.mediaDevices.enumerateDevices();
-          const audioInputs = devices.filter((device) => device.kind === 'audioinput');
-
-          $('#mic').innerHTML = '<option value="">Choose a microphone</option>' +
-            audioInputs.map((device, index) =>
-              `<option value="${device.deviceId}">${device.label || 'Microphone ' + (index + 1)}</option>`
-            ).join('');
-
-          if (selected && audioInputs.some((device) => device.deviceId === selected)) {
-            $('#mic').value = selected;
-          }
-        } catch {
-          $('#mic').innerHTML = '<option value="">Choose a microphone</option>';
-        }
-      }
-
-      $('#rescan').onclick = scanMicDevices;
-      $('#mic').onchange = () => {
-        $('#micStatus').textContent = $('#mic').value
-          ? 'Selected: ' + $('#mic').selectedOptions[0].textContent
-          : 'Selected: No microphone selected';
-      };
-
-      scanMicDevices();
-
-      $('#students').onclick = () => {
-        modal(
-          'Students & phone camera',
-          `
-            <p><b>Phone camera over USB:</b> connect a UVC/webcam-enabled phone to the computer and allow it in browser camera permissions. USB file-transfer/MTP alone does not provide a live camera.</p>
-            <p><b>Phone camera over Wi‑Fi:</b> open an IP camera/WebRTC camera app on the phone and enter its reachable video URL. Both devices must be on the same network; browser-compatible WebRTC/HLS/MJPEG URLs work best.</p>
-            <input id="wifiUrl" placeholder="https://… or http://phone-ip:port/video">
-            <div class="row">
-              <button id="connectWifi">Connect Wi‑Fi camera</button>
-              <button id="chooseDevice">Choose USB / browser camera</button>
-            </div>
-          `,
-          'Done'
-        );
-      };
-
-      $('#modalBody').addEventListener('click', async (event) => {
-        if (event.target.id === 'connectWifi') {
-          const url = $('#wifiUrl').value.trim();
-          try {
-            stopCamera();
-            $('#cameraVideo').src = url;
-            $('#cameraVideo').muted = true;
-            await $('#cameraVideo').play();
-            $('#cameraBox').classList.add('on');
-            $('#camToggle').textContent = 'Hide Cam';
-            $('#modal').classList.remove('open');
-            toast('Wi‑Fi camera connected');
-          } catch {
-            toast('Could not play camera URL. Use a browser-supported stream URL.');
-          }
-        }
-
-        if (event.target.id === 'chooseDevice') {
-          try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-              video: {
-                width: { ideal: 1920 },
-                height: { ideal: 1080 },
-                frameRate: { ideal: 30 }
-              },
-              audio: false
-            });
-            if (cameraStream) cameraStream.getTracks().forEach((track) => track.stop());
-            cameraStream = stream;
-            $('#cameraVideo').src = '';
-            $('#cameraVideo').srcObject = stream;
-            $('#cameraBox').classList.add('on');
-            $('#camToggle').textContent = 'Hide Cam';
-            $('#modal').classList.remove('open');
-          } catch {
-            toast('No available USB/browser camera');
-          }
-        }
-      });
-
-      function escapeHtml(text) {
-        return String(text).replace(/[&<>"']/g, (character) => ({
-          '&': '&amp;',
-          '<': '&lt;',
-          '>': '&gt;',
-          '"': '&quot;',
-          "'": '&#39;'
-        }[character]));
-      }
-
-      function chatLine(text) {
-        const box = $('#chatLog');
-        box.innerHTML += `<div>${escapeHtml(text)}</div>`;
-        box.scrollTop = box.scrollHeight;
-      }
-
-      function sendToAll(message) {
-        connections.forEach((connection) => {
-          if (connection && connection.open) connection.send(message);
-        });
-      }
-
-      function receive(connection) {
-        connections.push(connection);
-
-        connection.on('open', () => {
-          connection.send({
-            type: 'welcome',
-            teacher: peer ? peer.id : null,
-            permissions: true
-          });
-          sendToAll({ type: 'roster', count: connections.length });
-        });
-
-        connection.on('data', (message) => {
-          if (!message) return;
-
-          if (message.type === 'chat') {
-            chatLine('Student: ' + message.text);
-            sendToAll({ type: 'chat', text: message.text, from: 'Student' });
-          }
-
-          if (message.type === 'hand') {
-            chatLine('✋ Student raised a hand');
-            toast('A student raised their hand');
-          }
-
-          if (message.type === 'mic-request') {
-            chatLine('🎙 Student requested microphone permission');
-            modal(
-              'Allow student microphone?',
-              '<p>Allow this student to send live audio to the teacher?</p>',
-              'Allow',
-              () => {
-                connection.send({ type: 'mic-allowed' });
-                toast('Microphone permission allowed');
-              }
-            );
-            $('#modalClose').onclick = () => {
-              connection.send({ type: 'mic-denied' });
-              $('#modal').classList.remove('open');
-            };
-          }
-        });
-
-        connection.on('close', () => {
-          connections = connections.filter((item) => item !== connection);
-          sendToAll({ type: 'roster', count: connections.length });
-        });
-      }
 
       function broadcastBoard() {
-        if (!liveStream) return;
-        sendToAll({ type: 'board-update', pages, current });
-      }
-
-      function loadPeer() {
-        return new Promise((resolve, reject) => {
-          if (window.Peer) {
-            resolve();
-            return;
-          }
-          const script = document.createElement('script');
-          script.src = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
-          script.onload = resolve;
-          script.onerror = reject;
-          document.head.appendChild(script);
-        });
-      }
-
-      function startLive() {
-        loadPeer().then(() => {
-          peer = new Peer();
-
-          peer.on('open', (id) => {
-            roomId = id;
-            const link = location.href.split('?')[0] + '?join=' + encodeURIComponent(id);
-
-            modal(
-              'Live class is ready',
-              `
-                <p>Send this join link to students. Students need a modern browser and camera/microphone permissions only if they ask to speak.</p>
-                <input id="shareLink" value="${escapeHtml(link)}" readonly>
-                <div class="row">
-                  <button id="copyLink">Copy student link</button>
-                  <label style="display:flex;align-items:center;gap:5px">
-                    <input id="allowMic" type="checkbox" checked>Allow students to request mic
-                  </label>
-                </div>
-                <p>Connected students: <span id="studentCount">0</span></p>
-              `,
-              'Close'
-            );
-
-            $('#modalBody').addEventListener('click', (event) => {
-              if (event.target.id === 'copyLink') {
-                navigator.clipboard?.writeText(link);
-                toast('Student link copied');
-              }
-            });
-
-            liveComposite = compositeStream();
-            liveStream = liveComposite.stream;
-
-            peer.on('connection', receive);
-
-            peer.on('call', (call) => {
-              call.answer();
-              call.on('stream', (stream) => {
-                teacherMicAudio = new Audio();
-                teacherMicAudio.srcObject = stream;
-                teacherMicAudio.play().catch(() => {});
-                chatLine('Student microphone connected');
-              });
-            });
-
-            $('#live').textContent = 'End Live';
-            toast('Live class started');
-          });
-
-          peer.on('error', () => toast('Live connection error. Try starting the class again.'));
-        }).catch(() => {
-          toast('Live needs an internet connection to PeerJS signaling');
-        });
-      }
-
-      $('#live').onclick = () => {
-        if (liveStream) {
-          liveComposite?.stop();
-          liveComposite = null;
-          liveStream = null;
-          peer?.destroy();
-          peer = null;
-          connections = [];
-          $('#live').textContent = 'Go Live';
-          toast('Live class ended');
-        } else {
-          startLive();
+        if (peer && roomId) {
+          const payload = JSON.stringify({ type: 'board', pages, current, zoom });
+          connections.forEach((conn) => conn.send(payload));
         }
-      };
-
-      function startStudent(id) {
-        loadPeer().then(() => {
-          studentPeer = new Peer();
-
-          studentPeer.on('open', (studentId) => {
-            teacherConn = studentPeer.connect(id);
-
-            teacherConn.on('open', () => {
-              teacherConn.send({ type: 'join', id: studentId });
-              $('#studentScreen').classList.add('open');
-              $('#chat').classList.add('open');
-            });
-
-            teacherConn.on('data', async (message) => {
-              if (!message) return;
-
-              if (message.type === 'mic-allowed') {
-                try {
-                  studentMic = await navigator.mediaDevices.getUserMedia({ audio: true });
-                  studentPeer.call(id, studentMic);
-                } catch {
-                  toast('Microphone permission denied');
-                }
-              }
-
-              if (message.type === 'mic-denied') {
-                toast('Teacher declined mic request');
-              }
-
-              if (message.type === 'chat') {
-                chatLine('Teacher: ' + message.text);
-              }
-
-              if (message.type === 'welcome' && message.permissions) {
-                $('#askMic').disabled = false;
-              }
-
-              if (message.type === 'board-update') {
-              }
-            });
-          });
-
-          studentPeer.on('call', (call) => {
-            call.answer();
-            call.on('stream', (stream) => {
-              $('#studentVideo').srcObject = stream;
-              $('#studentVideo').muted = false;
-            });
-          });
-
-          studentPeer.on('error', () => {
-            toast('Could not connect. Ask teacher for a fresh link.');
-          });
-        }).catch(() => toast('Could not load live class support.'));
       }
 
-      if (new URLSearchParams(location.search).has('join')) {
-        const id = new URLSearchParams(location.search).get('join');
-        setTimeout(() => startStudent(id), 300);
-      }
-
-      $('#raise').onclick = () => {
-        if (teacherConn) teacherConn.send({ type: 'hand' });
-        toast('Hand raised');
-      };
-
-      $('#askMic').onclick = () => {
-        if (teacherConn) teacherConn.send({ type: 'mic-request' });
-        toast('Asked teacher for mic permission');
-      };
-
-      $('#studentChat').onclick = () => {
-        $('#chat').classList.toggle('open');
-        $('#chatTitle').textContent = 'Class chat';
-      };
-
-      $('#leave').onclick = () => {
-        teacherConn?.close();
-        studentPeer?.destroy();
-        if (studentMic) studentMic.getTracks().forEach((track) => track.stop());
-        studentMic = null;
-        $('#studentScreen').classList.remove('open');
-        toast('You left the class');
-      };
-
-      $('#sendChat').onclick = () => {
-        const text = $('#chatInput').value.trim();
-        if (!text) return;
-
-        if (teacherConn) teacherConn.send({ type: 'chat', text });
-        else sendToAll({ type: 'chat', text });
-
-        chatLine('You: ' + text);
-        $('#chatInput').value = '';
-      };
-
-      $('#chatInput').onkeydown = (event) => {
-        if (event.key === 'Enter') $('#sendChat').click();
-      };
-
-      $('#dpp').onclick = () => {
-        modal(
-          'DPP',
-          '<p>Daily Practice Problems — draft a question for students.</p><textarea id="dppText" placeholder="Write a problem…"></textarea>',
-          'Share',
-          () => {
-            const text = $('#dppText')?.value;
-            if (text) sendToAll({ type: 'chat', text: 'DPP: ' + text });
-          }
-        );
-      };
-
-      setInterval(() => {
-        const now = Date.now();
-        pages.forEach((page, index) => {
-          if (!page.strokes.some((stroke) => stroke.tool === 'Laser Pointer')) return;
-          const filtered = page.strokes.filter((stroke) =>
-            stroke.tool !== 'Laser Pointer' || stroke.expiresAt > now
-          );
-          if (filtered.length !== page.strokes.length) {
-            page.strokes = filtered;
-            draw(index);
-          }
-        });
-      }, 400);
-
-      restoreBoard().finally(() => render());
-      window.addEventListener('beforeunload', () => { try { persistBoard(); } catch (_) {} });
-      window.addEventListener('resize', () => render());
+      buildThemeButtons();
+      buildToolButtons();
+      setInk('#111827');
+      render();
+      scheduleSave();
     })();
   </script>
 </body>
