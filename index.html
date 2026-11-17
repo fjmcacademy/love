@@ -787,123 +787,134 @@
       }
 
       function draw(i) {
-        const canvas = pagesEl.querySelector(`canvas[data-page="${i}"]`);
-        if (!canvas || !pages[i]) return;
+  const canvas = pagesEl.querySelector(`canvas[data-page="${i}"]`);
+  if (!canvas || !pages[i]) return;
 
-        const ctx = canvas.getContext('2d');
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
 
-        for (const stroke of pages[i].strokes || []) {
-          const points = stroke.points;
-          if (!points || !points.length) continue;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-          const isLaser = stroke.tool === 'Laser Pointer';
-          const remaining = isLaser
-            ? Math.max(0, (stroke.expiresAt - Date.now()) / (laserDuration * 1000))
-            : 1;
+  for (const stroke of pages[i].strokes || []) {
+    const points = stroke.points;
+    if (!Array.isArray(points) || points.length === 0) continue;
 
-          if (isLaser && remaining <= 0) continue;
+    const isLaser = stroke.tool === 'Laser Pointer';
+    const remaining = isLaser
+      ? Math.max(0, ((stroke.expiresAt || 0) - Date.now()) / (laserDuration * 1000))
+      : 1;
 
-          ctx.save();
-          ctx.globalCompositeOperation = stroke.tool === 'Eraser'
-            ? 'destination-out' : 'source-over';
-          ctx.strokeStyle = stroke.color;
-          ctx.lineCap = 'round';
-          ctx.lineJoin = 'round';
-          ctx.globalAlpha = 1;
-          ctx.shadowBlur = 0;
-          ctx.setLineDash();
+    if (isLaser && remaining <= 0) continue;
 
-          const width = stroke.width || 3;
+    ctx.save();
+    ctx.globalCompositeOperation =
+      stroke.tool === 'Eraser' ? 'destination-out' : 'source-over';
+    ctx.strokeStyle = stroke.color || ink;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
 
-          switch (stroke.tool) {
-            case 'Laser Pointer':
-              ctx.lineWidth = width * 1.5;
-              ctx.globalAlpha = 0.9 * remaining;
-              ctx.shadowColor = stroke.color;
-              ctx.shadowBlur = 18;
-              break;
-            case 'Soft Brush':
-              ctx.lineWidth = width * 2.5;
-              ctx.globalAlpha = 0.28;
-              ctx.shadowColor = stroke.color;
-              ctx.shadowBlur = Math.max(3, width * 1.5);
-              break;
-            case 'Ink Flow':
-              ctx.lineWidth = width * 1.25;
-              ctx.globalAlpha = 0.92;
-              break;
-            case 'Neon Glow':
-              ctx.lineWidth = width;
-              ctx.shadowColor = stroke.color;
-              ctx.shadowBlur = 14;
-              ctx.globalAlpha = 0.95;
-              break;
-            case 'Writing Marker':
-              ctx.lineWidth = width * 2.4;
-              ctx.globalAlpha = 0.55;
-              break;
-            case 'Soft Marker':
-              ctx.lineWidth = width * 2.1;
-              ctx.globalAlpha = 0.45;
-              ctx.shadowColor = stroke.color;
-              ctx.shadowBlur = 2;
-              break;
-            case 'Gel Pen':
-              ctx.lineWidth = width * 1.1;
-              ctx.globalAlpha = 0.9;
-              ctx.shadowColor = stroke.color;
-              ctx.shadowBlur = 1.5;
-              break;
-            case 'Sketch Pen':
-              ctx.lineWidth = Math.max(1, width * 0.75);
-              ctx.globalAlpha = 0.76;
-              ctx.setLineDash([1.2, 1.1]);
-              break;
-            case 'Fountain Pen':
-              ctx.lineWidth = width * 1.4;
-              ctx.lineCap = 'square';
-              break;
-            case 'Calligraphy':
-              ctx.lineWidth = width * 1.8;
-              ctx.lineCap = 'square';
-              ctx.globalAlpha = 0.95;
-              break;
-            case 'Eraser':
-              ctx.lineWidth = Math.max(8, width);
-              break;
-            default:
-              ctx.lineWidth = width;
-          }
+    // setLineDash requires an array; calling it with no argument can throw.
+    ctx.setLineDash([]);
 
-          if (['Auto Smooth', 'Ink Flow', 'Soft Brush', 'Gel Pen'].includes(stroke.tool)) {
-            drawSmoothPath(ctx, points);
-          } else {
-            ctx.beginPath();
-            ctx.moveTo(points[0].x, points[0].y);
-            for (let n = 1; n < points.length; n++) {
-              ctx.lineTo(points[n].x, points[n].y);
-            }
-          }
+    const width = Number(stroke.width) || 3;
 
-          if (points.length === 1) {
-            ctx.lineTo(points[0].x + 0.1, points[0].y + 0.1);
-          }
+    switch (stroke.tool) {
+      case 'Laser Pointer':
+        ctx.lineWidth = width * 1.5;
+        ctx.globalAlpha = 0.9 * remaining;
+        ctx.shadowColor = stroke.color || ink;
+        ctx.shadowBlur = 18;
+        break;
+      case 'Soft Brush':
+        ctx.lineWidth = width * 2.5;
+        ctx.globalAlpha = 0.28;
+        ctx.shadowColor = stroke.color || ink;
+        ctx.shadowBlur = Math.max(3, width * 1.5);
+        break;
+      case 'Ink Flow':
+        ctx.lineWidth = width * 1.25;
+        ctx.globalAlpha = 0.92;
+        break;
+      case 'Neon Glow':
+        ctx.lineWidth = width;
+        ctx.shadowColor = stroke.color || ink;
+        ctx.shadowBlur = 14;
+        ctx.globalAlpha = 0.95;
+        break;
+      case 'Writing Marker':
+        ctx.lineWidth = width * 2.4;
+        ctx.globalAlpha = 0.55;
+        break;
+      case 'Soft Marker':
+        ctx.lineWidth = width * 2.1;
+        ctx.globalAlpha = 0.45;
+        ctx.shadowColor = stroke.color || ink;
+        ctx.shadowBlur = 2;
+        break;
+      case 'Gel Pen':
+        ctx.lineWidth = width * 1.1;
+        ctx.globalAlpha = 0.9;
+        ctx.shadowColor = stroke.color || ink;
+        ctx.shadowBlur = 1.5;
+        break;
+      case 'Sketch Pen':
+        ctx.lineWidth = Math.max(1, width * 0.75);
+        ctx.globalAlpha = 0.76;
+        ctx.setLineDash([1.2, 1.1]);
+        break;
+      case 'Fountain Pen':
+        ctx.lineWidth = width * 1.4;
+        ctx.lineCap = 'square';
+        break;
+      case 'Calligraphy':
+        ctx.lineWidth = width * 1.8;
+        ctx.lineCap = 'square';
+        ctx.globalAlpha = 0.95;
+        break;
+      case 'Eraser':
+        ctx.lineWidth = Math.max(8, width);
+        break;
+      default:
+        ctx.lineWidth = width;
+    }
 
-          ctx.stroke();
-          ctx.restore();
-        }
+    if (['Auto Smooth', 'Ink Flow', 'Soft Brush', 'Gel Pen'].includes(stroke.tool)) {
+      drawSmoothPath(ctx, points);
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let n = 1; n < points.length; n++) {
+        ctx.lineTo(points[n].x, points[n].y);
       }
+    }
 
-      function queueDraw(pageIndex) {
-        if (drawFrame) return;
-        drawFrame = requestAnimationFrame(() => {
-          drawFrame = 0;
-          draw(pageIndex);
-        });
-      }
+    // Make taps/dots visible as well as dragged strokes.
+    if (points.length === 1) {
+      ctx.beginPath();
+      ctx.arc(points[0].x, points[0].y, Math.max(0.5, ctx.lineWidth / 2), 0, Math.PI * 2);
+    }
 
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+const pendingDraws = new Set();
+
+function queueDraw(pageIndex) {
+  pendingDraws.add(pageIndex);
+  if (drawFrame) return;
+
+  drawFrame = requestAnimationFrame(() => {
+    drawFrame = 0;
+    for (const index of pendingDraws) draw(index);
+    pendingDraws.clear();
+  });
+} 
+      
       function attach(canvas) {
         let stroke = null;
         const pageIndex = Number(canvas.dataset.page);
