@@ -344,6 +344,7 @@
       <div class="subbar">
         <button id="prev">‹</button>
         <span id="pageLabel">Page 1 / 1</span>
+        <select id="pageSelect" aria-label="Go to page" style="min-width:110px"></select>
         <button id="next">›</button>
         <button id="newPage" style="color:#4ade80">+ New Page</button>
         <button id="deletePage" style="color:#fb7185">Delete Page</button>
@@ -689,6 +690,74 @@
         }
       }
 
+      function updatePageControls() {
+        const pageSelect = $('#pageSelect');
+        if (pageSelect) {
+          const options = Array.from(pageSelect.options).map((option) => option.value);
+          if (options.length !== pages.length) {
+            pageSelect.innerHTML = pages.map((_, index) => `<option value="${index}">Page ${index + 1}</option>`).join('');
+          }
+          pageSelect.value = String(current);
+        }
+
+        $('#pageLabel').textContent = `Page ${current + 1} / ${pages.length}`;
+        $('#paper').value = pages[current].paper;
+      }
+
+      function goToPage(index, scroll = true) {
+        current = Math.max(0, Math.min(index, pages.length - 1));
+        updatePageControls();
+
+        if (!scroll) return;
+
+        const stage = $('#stage');
+        const wrap = pagesEl.children[current];
+        if (!stage || !wrap) return;
+
+        const stageTop = stage.getBoundingClientRect().top;
+        const pageTop = wrap.getBoundingClientRect().top;
+        stage.scrollTo({
+          top: stage.scrollTop + pageTop - stageTop - 60,
+          behavior: 'smooth'
+        });
+      }
+
+      let pageScrollSyncFrame = 0;
+
+      $('#stage').addEventListener('scroll', () => {
+        if (pageScrollSyncFrame) return;
+
+        pageScrollSyncFrame = requestAnimationFrame(() => {
+          pageScrollSyncFrame = 0;
+
+          const stage = $('#stage');
+          if (!stage) return;
+
+          const stageCenter = stage.getBoundingClientRect().top + stage.clientHeight / 2;
+          let closest = current;
+          let closestDistance = Infinity;
+
+          Array.from(pagesEl.children).forEach((wrap, index) => {
+            const rect = wrap.getBoundingClientRect();
+            const distance = Math.abs((rect.top + rect.height / 2) - stageCenter);
+            if (distance < closestDistance) {
+              closestDistance = distance;
+              closest = index;
+            }
+          });
+
+          if (closest !== current) {
+            current = closest;
+            updatePageControls();
+            scheduleSave();
+          }
+        });
+      });
+
+      $('#pageSelect').onchange = (event) => {
+        goToPage(Number(event.target.value), true);
+      };
+
       function render() {
         const stage = $('#stage');
         const oldScrollTop = stage.scrollTop;
@@ -754,8 +823,7 @@
           attach(inkCanvas);
         });
 
-        $('#pageLabel').textContent = `Page ${current + 1} / ${pages.length}`;
-        $('#paper').value = pages[current].paper;
+        updatePageControls();
         requestAnimationFrame(() => {
           stage.scrollTop = oldScrollTop;
           stage.scrollLeft = oldScrollLeft;
