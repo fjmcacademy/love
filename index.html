@@ -1125,13 +1125,23 @@
           scheduleSave();
         });
       };
-
+     
       $('#newPage').onclick = () => {
-        pages.push(newPage());
-        current = pages.length - 1;
-        render();
-        scheduleSave();
-      };
+  const currentPage = pages[current];
+
+  const pageCopy = {
+    ...newPage(),
+    paper: currentPage.paper,
+    bg: currentPage.bg,
+    rule: currentPage.rule
+  };
+
+  pages.splice(current + 1, 0, pageCopy);
+  current = current + 1;
+
+  render();
+  scheduleSave();
+};
 
       $('#deletePage').onclick = () => {
         if (pages.length <= 1) {
