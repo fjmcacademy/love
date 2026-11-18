@@ -1335,18 +1335,23 @@
           const key = `pdf-${Date.now()}-${Math.random().toString(36).slice(2)}`;
           pdfDocs.set(key, pdf);
 
-          pages = Array.from({ length: pdf.numPages }, (_, index) => ({
-            ...newPage(),
-            paper: 'blank',
-            bg: '#fff',
-            pdfKey: key,
-            pdfPage: index + 1
-          }));
+          const pdfPages = Array.from({ length: pdf.numPages }, (_, index) => ({
+  ...newPage(),
+  paper: 'blank',
+  bg: '#fff',
+  pdfKey: key,
+  pdfPage: index + 1
+}));
 
-          current = 0;
-          render();
-          scheduleSave();
-          toast(`PDF opened: ${pages.length} page(s)`);
+// Current page ke baad PDF insert karo
+pages.splice(current + 1, 0, ...pdfPages);
+
+// Pehle inserted PDF page par jao
+current = current + 1;
+
+render();
+scheduleSave();
+toast(`PDF inserted: ${pdfPages.length} page(s)`);
         } catch (error) {
           console.error(error);
           toast('PDF open failed. Try again.');
