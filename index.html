@@ -1015,8 +1015,9 @@
           if (!stroke) return;
           if (event) event.preventDefault();
           stroke = null;
-          draw(pageIndex);
-          scheduleSave();
+draw(pageIndex);
+broadcastBoard();
+scheduleSave();
         };
 
         canvas.addEventListener('pointerdown', startStroke, { passive: false });
@@ -1139,7 +1140,8 @@
   current = current + 1;
 
   render();
-  scheduleSave();
+broadcastBoard();
+scheduleSave();
 };
       $('#deletePage').onclick = () => {
         if (pages.length <= 1) {
@@ -1148,26 +1150,29 @@
         }
         modal('Delete this page?', `<p>Delete page ${current + 1}? This cannot be undone.</p>`, 'Delete', () => {
           pages.splice(current, 1);
-          current = Math.min(current, pages.length - 1);
-          render();
-          scheduleSave();
+current = Math.min(current, pages.length - 1);
+render();
+broadcastBoard();
+scheduleSave();
           toast('Page deleted');
         });
       };
 
       $('#prev').onclick = () => {
         if (current > 0) {
-          current--;
-          render();
-          scheduleSave();
+        current--;
+render();
+broadcastBoard();
+scheduleSave();  
         }
       };
 
       $('#next').onclick = () => {
         if (current < pages.length - 1) {
-          current++;
-          render();
-          scheduleSave();
+         current++;
+render();
+broadcastBoard();
+scheduleSave(); 
         }
       };
 
@@ -1335,15 +1340,24 @@
           const key = `pdf-${Date.now()}-${Math.random().toString(36).slice(2)}`;
           pdfDocs.set(key, pdf);
 
-          pages = Array.from({ length: pdf.numPages }, (_, index) => ({
-            ...newPage(),
-            paper: 'blank',
-            bg: '#fff',
-            pdfKey: key,
-            pdfPage: index + 1
-          }));
+          const pdfPages = Array.from(
+  { length: pdf.numPages },
+  (_, index) => ({
+    ...newPage(),
+    paper: 'blank',
+    bg: '#fff',
+    pdfKey: key,
+    pdfPage: index + 1
+  })
+);
 
-          current = 0;
+pages.splice(current + 1, 0, ...pdfPages);
+current++;
+
+render();
+broadcastBoard();
+scheduleSave();
+
           render();
           scheduleSave();
           toast(`PDF opened: ${pages.length} page(s)`);
@@ -1750,6 +1764,11 @@
         connections.push(connection);
 
         connection.on('open', () => {
+          const countEl = document.getElementById('studentCount');
+
+if (countEl) {
+  countEl.textContent = connections.length;
+}
           connection.send({
             type: 'welcome',
             teacher: peer ? peer.id : null,
@@ -1790,11 +1809,22 @@
         });
 
         connection.on('close', () => {
+          const countEl = document.getElementById('studentCount');
+
+if (countEl) {
+  countEl.textContent = connections.length;
+}
           connections = connections.filter((item) => item !== connection);
           sendToAll({ type: 'roster', count: connections.length });
         });
       }
+      function kickStudent(connection) {
+  connection.send({
+    type: 'kicked'
+  });
 
+  connection.close();
+}
       function broadcastBoard() {
         if (!liveStream) return;
         sendToAll({ type: 'board-update', pages, current });
@@ -1849,6 +1879,13 @@
             liveStream = liveComposite.stream;
 
             peer.on('connection', receive);
+
+            setTimeout(() => {
+  broadcastBoard();
+}, 1000);
+
+
+            
 
             peer.on('call', (call) => {
               call.answer();
@@ -1911,8 +1948,13 @@
               }
 
               if (message.type === 'mic-denied') {
-                toast('Teacher declined mic request');
-              }
+                if (message.type === 'mic-revoked') {
+  if (studentMic) {
+    studentMic.getTracks().forEach(track => track.stop());
+    studentMic = null;
+  }
+  toast('Teacher removed microphone access');
+}
 
               if (message.type === 'chat') {
                 chatLine('Teacher: ' + message.text);
@@ -1921,9 +1963,19 @@
               if (message.type === 'welcome' && message.permissions) {
                 $('#askMic').disabled = false;
               }
+              if (message.type === 'kicked') {
+  toast('Teacher removed you from class');
 
+  teacherConn?.close();
+  studentPeer?.destroy();
+
+  location.reload();
+}
               if (message.type === 'board-update') {
-              }
+  pages = message.pages || [];
+  current = message.current || 0;
+  render();
+}
             });
           });
 
