@@ -1125,8 +1125,7 @@
           scheduleSave();
         });
       };
-     
-      $('#newPage').onclick = () => {
+     $('#newPage').onclick = () => {
   const currentPage = pages[current];
 
   const pageCopy = {
@@ -1142,7 +1141,6 @@
   render();
   scheduleSave();
 };
-
       $('#deletePage').onclick = () => {
         if (pages.length <= 1) {
           toast('At least one page must remain');
