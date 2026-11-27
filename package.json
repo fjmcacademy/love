@@ -1,0 +1,9 @@
+{
+  "name": "fjmc-teaching-board",
+  "version": "1.0.0",
+  "description": "FJMC Teaching Board desktop wrapper",
+  "main": "main.js",
+  "scripts": {"start":"electron .", "dist":"electron-builder --win nsis"},
+  "devDependencies": {"electron":"^39.0.0", "electron-builder":"^26.0.0"},
+  "build": {"appId":"com.fjmc.teachingboard", "productName":"FJMC Teaching Board", "directories":{"output":"dist"}, "files":["main.js","preload.js","board/**/*","package.json"], "win":{"target":["nsis"],"artifactName":"FJMC-Teaching-Board-Setup-${version}.${ext}"}, "nsis":{"oneClick":false,"allowToChangeInstallationDirectory":true}}
+}
