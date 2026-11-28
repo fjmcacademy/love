@@ -1058,12 +1058,9 @@
               ctx.lineCap = 'square';
               break;
             case 'Calligraphy':
-              ctx.lineWidth = width * 1.35;
-              ctx.lineCap = 'round';
-              ctc.linejoin = 'round';
-              ctx.globalAlpha = 0.96;
-              ctx.shadowColor = stroke.color;
-              ctx.shadowBlur = Math.max(0.8, width * 0.22);
+              ctx.lineWidth = width * 1.8;
+              ctx.lineCap = 'square';
+              ctx.globalAlpha = 0.95;
               break;
             case 'Eraser':
               ctx.lineWidth = Math.max(8, width);
@@ -2427,4 +2424,4 @@
     })();
   </script>
 </body>
-</html>
+  </html>
